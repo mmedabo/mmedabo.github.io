@@ -361,3 +361,15 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
   border-bottom:1px solid var(--border);outline:none;padding:2px 0;}
 .inv-qty-inp:focus{border-bottom-color:var(--accent);}
 .inv-qty-inp::-webkit-inner-spin-button,.inv-qty-inp::-webkit-outer-spin-button{-webkit-appearance:none;}
+
+/* ── HISTORY ADMIN CONTROLS ── */
+.hist-admin-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:10px 14px;margin-bottom:14px;}
+.hist-trim-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.hist-ctrl-label{font-size:.78rem;color:var(--muted);}
+.hist-keep-inp{background:var(--card);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);padding:5px 8px;font-size:.84rem;outline:none;width:70px;text-align:center;}
+.hist-keep-inp:focus{border-color:var(--accent);}
+.hist-clear-btn{color:var(--coral) !important;border-color:var(--coral) !important;font-size:.75rem;}
+.hist-clear-btn:disabled{opacity:.35;cursor:not-allowed;}

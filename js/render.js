@@ -540,8 +540,24 @@ function renderTournament() {
 
   if (tab==="history") {
     const log = state.auditLog || [];
+    // Admin control bar (shown even when empty)
+    const adminHistControls = admin ? `
+      <div class="hist-admin-bar">
+        <div class="hist-trim-group">
+          <span class="hist-ctrl-label">Keep last</span>
+          <input id="hist-keep-inp" class="hist-keep-inp" type="number" min="0"
+            placeholder="e.g. 10" value="${Math.max(0, log.length - 10) > 0 ? 10 : log.length}"/>
+          <span class="hist-ctrl-label">entries</span>
+          <button class="btn btn-ghost btn-sm" onclick="trimHistory()">Trim</button>
+        </div>
+        <button class="btn btn-reset hist-clear-btn" onclick="clearAllHistory()"
+          title="Clear all history" ${log.length===0?"disabled":""}>
+          Clear All
+        </button>
+      </div>` : "";
+
     if (log.length === 0) {
-      content = `<div style="text-align:center;padding:60px 20px;color:var(--muted)">
+      content = adminHistControls + `<div style="text-align:center;padding:60px 20px;color:var(--muted)">
         <div style="font-size:2.5rem;margin-bottom:12px">&#128203;</div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;letter-spacing:2px">No activity yet</div>
         <div style="font-size:.83rem;margin-top:6px">Score entries and resets will appear here.</div>
@@ -581,8 +597,8 @@ function renderTournament() {
             </div>
           </div>`;
       }).join("");
-      content = `
-        <div style="margin-bottom:12px">
+      content = adminHistControls + `
+        <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <span class="tag">${log.length} event${log.length!==1?"s":""} . most recent first</span>
         </div>
         <div class="hist-list">${entries}</div>`;

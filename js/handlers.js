@@ -1,5 +1,5 @@
 import { state, isAdmin, syncToFirebase, syncTeamsData, syncSchedule, syncInventory,
-         startFirebaseListener, isConfigured } from "./state.js";
+         syncAuditLog, startFirebaseListener, isConfigured } from "./state.js";
 import { ADMIN_PIN } from "./config.js";
 import { render } from "./render.js";
 import { startTournament, advanceToKnockout, toggleLive, resetPoolMatch,
@@ -116,6 +116,13 @@ window.resetKOMatch      = (stage,id)=>resetKOMatch(stage,id);
 window.confirmGenerate = () => {
   if (state.pools) {
     if (!confirm("This will reset ALL scores and matches. Team names will be kept. Continue?")) return;
+    // Offer to also clear history
+    if ((state.auditLog||[]).length > 0) {
+      if (confirm("Reset match history too? (Recommended for a fresh tournament)\n\nOK = clear history   Cancel = keep history")) {
+        state.auditLog = [];
+        syncAuditLog();
+      }
+    }
   }
   startTournament();
 };
@@ -223,6 +230,28 @@ window.submitKOScore = (stage,id)=>{
   saveKOScore(stage,id,s1,s2);
 };
 
+
+/* ==========================================================================
+   HISTORY HANDLERS
+========================================================================== */
+window.clearAllHistory = () => {
+  if (!confirm("Clear ALL history entries? This cannot be undone.")) return;
+  state.auditLog = [];
+  syncAuditLog();
+  render();
+};
+
+window.trimHistory = () => {
+  const inp = document.getElementById("hist-keep-inp");
+  const keep = parseInt(inp?.value || "0", 10);
+  if (isNaN(keep) || keep < 0) { alert("Please enter a valid number."); return; }
+  if (keep === 0) {
+    if (!confirm("Keep 0 entries = clear all history. Continue?")) return;
+  }
+  state.auditLog = (state.auditLog || []).slice(0, keep);
+  syncAuditLog();
+  render();
+};
 
 /* ==========================================================================
    INVENTORY HANDLERS
