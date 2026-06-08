@@ -381,7 +381,20 @@ function renderTournament() {
       const hint = admin && !poolsDone && phase!=="knockout"
         ? `<p style="text-align:center;color:#5A7A5E;font-size:.82rem;margin-top:12px">Complete all pool matches to unlock Quarterfinals</p>` : "";
 
+      const poolFormatBanner = `
+        <div class="format-banner">
+          <div class="format-banner-title">&#127952; Qualifier Format</div>
+          <div class="format-rules">
+            <span class="format-rule"><span class="format-rule-num">15</span><span class="format-rule-lbl">points to win</span></span>
+            <span class="format-sep">&#9679;</span>
+            <span class="format-rule"><span class="format-rule-num">+2</span><span class="format-rule-lbl">win margin (deuce)</span></span>
+            <span class="format-sep">&#9679;</span>
+            <span class="format-rule"><span class="format-rule-num">18</span><span class="format-rule-lbl">cap (continuous deuce)</span></span>
+          </div>
+        </div>`;
+
       content = `
+        ${poolFormatBanner}
         <div class="progress-row">
           <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
           <div class="progress-label">${donePool}/${totalPool} done${livePool>0?` . <span style="color:#FF6B3D">${livePool} live</span>`:""}</div>
@@ -419,6 +432,16 @@ function renderTournament() {
       const finSkel  = seedLabels.final.map((l,i) => skeletonCard(l, "&#127942; Final")).join("");
 
       content = `
+        <div class="format-banner format-banner-ko">
+          <div class="format-banner-title">&#127942; Knockout Format &mdash; QF / SF / Final</div>
+          <div class="format-rules">
+            <span class="format-rule"><span class="format-rule-num">21</span><span class="format-rule-lbl">points to win</span></span>
+            <span class="format-sep">&#9679;</span>
+            <span class="format-rule"><span class="format-rule-num">+2</span><span class="format-rule-lbl">win margin (deuce)</span></span>
+            <span class="format-sep">&#9679;</span>
+            <span class="format-rule"><span class="format-rule-num">25</span><span class="format-rule-lbl">cap (continuous deuce)</span></span>
+          </div>
+        </div>
         <div class="ko-notice">
           &#128274; Pool phase in progress &mdash; bracket seeds shown below. Teams locked in once all pool matches complete.
         </div>
@@ -446,7 +469,20 @@ function renderTournament() {
       const sfCards   = pools.koMatches.sf.map((m,i)=>koCardHTML(m,"sf",i)).join("");
       const finalCard = pools.koMatches.final.map((m,i)=>koCardHTML(m,"final",i)).join("");
 
+      const koFormatBanner = `
+        <div class="format-banner format-banner-ko">
+          <div class="format-banner-title">&#127942; Knockout Format &mdash; QF / SF / Final</div>
+          <div class="format-rules">
+            <span class="format-rule"><span class="format-rule-num">21</span><span class="format-rule-lbl">points to win</span></span>
+            <span class="format-sep">&#9679;</span>
+            <span class="format-rule"><span class="format-rule-num">+2</span><span class="format-rule-lbl">win margin (deuce)</span></span>
+            <span class="format-sep">&#9679;</span>
+            <span class="format-rule"><span class="format-rule-num">25</span><span class="format-rule-lbl">cap (continuous deuce)</span></span>
+          </div>
+        </div>`;
+
       content = `
+        ${koFormatBanner}
         ${champBanner}
         <div class="ko-section">
           <div class="ko-title">Quarterfinals <div class="ko-title-bar"></div></div>
