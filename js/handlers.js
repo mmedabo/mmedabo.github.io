@@ -1,5 +1,5 @@
 import { state, isAdmin, syncToFirebase, syncTeamsData, syncSchedule, syncInventory,
-         syncAuditLog, startFirebaseListener, isConfigured } from "./state.js";
+         syncAuditLog, syncDaySchedule, startFirebaseListener, isConfigured } from "./state.js";
 import { ADMIN_PIN } from "./config.js";
 import { render } from "./render.js";
 import { startTournament, advanceToKnockout, toggleLive, resetPoolMatch,
@@ -13,7 +13,7 @@ window.__render = render;
 ========================================================================== */
 window.enterViewer = () => {
   state.role = "viewer";
-  state.tab  = "pools";
+  state.tab  = "overview";
   startFirebaseListener();
   render();
 };
@@ -80,6 +80,14 @@ window.updateTeamName = (pi,ti,val)=>{
   if (state.pools?.teams?.[pi]) state.pools.teams[pi][ti] = val;
 };
 window.setTab         = (t)=>{ state.tab=t; render(); };
+window.togglePoolExpand = (pi) => {
+  state.expandedPools[pi] = !( state.expandedPools[pi] !== false );
+  render();
+};
+window.toggleTeamExpand = (key) => {
+  state.expandedTeams[key] = !state.expandedTeams[key];
+  render();
+};
 window.setScheduleCourt = (id, val) => { state.schedule[id] = {...(state.schedule[id]||{}), court:val}; syncSchedule(); render(); };
 window.setScheduleTime  = (id, val) => { state.schedule[id] = {...(state.schedule[id]||{}), time:val};  syncSchedule(); render(); };
 
@@ -293,6 +301,37 @@ window.saveInventory = () => {
   syncInventory();
   const btn = document.querySelector('[onclick="saveInventory()"]');
   if (btn) { btn.textContent = "v Saved!"; setTimeout(()=>{ btn.textContent = "&#128190; Save Inventory"; }, 2000); }
+};
+
+/* ==========================================================================
+   DAY SCHEDULE HANDLERS
+========================================================================== */
+window.updateDaySchedTime     = (idx, val) => { state.daySchedule[idx].time     = val; };
+window.updateDaySchedActivity = (idx, val) => { state.daySchedule[idx].activity = val; };
+window.deleteDaySchedRow = (idx) => {
+  state.daySchedule.splice(idx, 1);
+  render();
+};
+window.addDaySchedRow = (position) => {
+  const entry = { id:"ds"+Date.now(), time:"", activity:"" };
+  if (position === "top") {
+    state.daySchedule.unshift(entry);
+  } else {
+    state.daySchedule.push(entry);
+  }
+  render();
+};
+window.moveDaySchedRow = (idx, dir) => {
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= state.daySchedule.length) return;
+  const rows = state.daySchedule;
+  [rows[idx], rows[newIdx]] = [rows[newIdx], rows[idx]];
+  render();
+};
+window.saveDaySchedule = () => {
+  syncDaySchedule();
+  const btn = document.querySelector('[onclick="saveDaySchedule()"]');
+  if (btn) { btn.textContent = "Saved!"; setTimeout(()=>{ btn.textContent = "Save"; }, 2000); }
 };
 
 /* boot */

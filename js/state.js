@@ -14,6 +14,7 @@ if (isConfigured) {
 function syncToFirebase(data) { if (db) set(ref(db,"tournament"), data); }
 function syncTeamsData() { if (db) set(ref(db,"teamsData"), state.teamsData); }
 function syncSchedule()  { if (db) set(ref(db,"schedule"),  state.schedule); }
+function syncDaySchedule() { if (db) set(ref(db,"daySchedule"), state.daySchedule); }
 function syncInventory() { if (db) set(ref(db,"inventory"), state.inventory); }
 function syncAuditLog() { if (db) set(ref(db,"auditLog"), state.auditLog); }
 
@@ -74,6 +75,11 @@ function startFirebaseListener() {
     if (data) state.inventory = data;
   });
 
+  onValue(ref(db,"daySchedule"), snap => {
+    const data = snap.val();
+    if (data) state.daySchedule = data;
+  });
+
   onValue(ref(db,"teamsData"), snap => {
     const data = snap.val();
     if (data) {
@@ -105,7 +111,7 @@ let state = {
   pinError: false,
 
   phase: "setup",
-  tab: "pools",
+  tab: "overview",
   teamNames: DEFAULT_TEAMS.map(p=>[...p]),
   pools: null,
   editingMatch: null,
@@ -118,6 +124,23 @@ let state = {
   ),
   editingTeamsData: false,
   schedule: {},
+  daySchedule: [
+    { id:"ds1",  time:"1:30-1:40", activity:"Team registration" },
+    { id:"ds2",  time:"1:40-1:50", activity:"Tournament briefing" },
+    { id:"ds3",  time:"1:50-2:00", activity:"Warm-up / stretching" },
+    { id:"ds4",  time:"2:00-2:05", activity:"Group photo &#128247;" },
+    { id:"ds5",  time:"2:05-3:45", activity:"Group stage" },
+    { id:"ds6",  time:"3:45-4:00", activity:"Score tally + hydration break" },
+    { id:"ds7",  time:"4:00-4:30", activity:"Quarter-finals" },
+    { id:"ds8",  time:"4:30-4:45", activity:"Drinks / rest break &#127862;" },
+    { id:"ds9",  time:"4:45-5:15", activity:"Semi-finals" },
+    { id:"ds10", time:"5:15-5:30", activity:"Finalists rest / hydration break &#127862;" },
+    { id:"ds11", time:"5:30-6:00", activity:"Grand Final &#127942;" },
+    { id:"ds12", time:"6:00-6:10", activity:"Prize presentation" },
+    { id:"ds13", time:"6:10-6:20", activity:"Champions photos / closing &#128247;" },
+  ],
+  expandedTeams: {}, // { 'poolIdx-teamName': true } — UI only, not synced
+  expandedPools: { 0:true, 1:false, 2:false, 3:false }, // only Pool A open by default
   auditLog: [],
   inventory: {
     equipment: [
@@ -143,4 +166,4 @@ const isAdmin = () => state.role === "admin";
 
 export { state, isAdmin, isConfigured, db,
          syncToFirebase, syncTeamsData, syncSchedule, syncAuditLog, addAuditEntry,
-         syncInventory, startFirebaseListener };
+         syncInventory, syncDaySchedule, startFirebaseListener };

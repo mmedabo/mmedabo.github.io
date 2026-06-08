@@ -58,17 +58,49 @@ function poolCardHTML(pi) {
   const done    = matches.filter(m=>m.status==="done").length;
   const admin   = isAdmin();
 
-  const rows = stand.map((s,rank)=>`
+  const rows = stand.map((s,rank) => {
+    const expandKey = `${pi}-${s.name}`;
+    const expanded  = !!state.expandedTeams[expandKey];
+
+    // Look up players from teamsData by matching team name
+    const teamIdx   = state.pools.teams[pi].indexOf(s.name);
+    const teamData  = (state.teamsData?.[pi]?.[teamIdx]) || {};
+    const male      = (teamData.players?.[0] || "").trim();
+    const female    = (teamData.players?.[1] || "").trim();
+    const hasPlayers = male || female;
+
+    const expandBtn = hasPlayers
+      ? `<button class="team-expand-btn ${expanded?"open":""}" onclick="toggleTeamExpand('${expandKey}')" title="Show players">
+           ${expanded ? "&#9660;" : "&#9658;"}
+         </button>`
+      : `<span class="team-expand-btn-placeholder"></span>`;
+
+    const playerRow = (expanded && hasPlayers) ? `
+      <tr class="team-player-row ${rank<2?"qualify":""}">
+        <td></td>
+        <td colspan="4">
+          <div class="team-player-list">
+            ${male   ? `<span class="player-chip male-chip">&#9794; ${esc(male)}</span>`   : ""}
+            ${female ? `<span class="player-chip female-chip">&#9792; ${esc(female)}</span>` : ""}
+          </div>
+        </td>
+      </tr>` : "";
+
+    return `
     <tr class="${rank<2?"qualify":""}">
       <td><span class="rank-dot" style="${rank<2?`background:${color}22;color:${color}`:"color:#5A7A5E"}">${rank+1}</span></td>
       <td>
-        <span>${esc(s.name)}</span>
-        ${rank<2?`<span class="qualify-pill">QF</span>`:""}
+        <div style="display:flex;align-items:center;gap:6px">
+          ${expandBtn}
+          <span>${esc(s.name)}</span>
+          ${rank<2?`<span class="qualify-pill">QF</span>`:""}
+        </div>
       </td>
       <td style="color:${color}">${s.W}</td>
       <td style="color:#5A7A5E">${s.L}</td>
       <td style="color:${s.PF-s.PA>=0?"#27AE60":"#FF6B3D"};font-size:.8rem">${s.PF-s.PA>0?"+":""}${s.PF-s.PA}</td>
-    </tr>`).join("");
+    </tr>${playerRow}`;
+  }).join("");
 
   // Group matches by round and build display
   const matchesByRound = {};
@@ -146,18 +178,27 @@ function poolCardHTML(pi) {
       </div>`;
   }).join("");
 
+  const isOpen = state.expandedPools[pi] !== false; // default open
+
   return `
-  <div class="pool-card" style="border-top:3px solid ${color}">
-    <div class="pool-header">
-      <div class="pool-name" style="color:${color}">Pool ${POOL_NAMES[pi]}</div>
-      <div class="net-badge">Net ${pi+1}</div>
+  <div class="pool-card ${isOpen?"pool-open":"pool-collapsed"}" style="border-top:3px solid ${color}">
+    <div class="pool-header pool-header-clickable" onclick="togglePoolExpand(${pi})">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="pool-chevron" style="color:${color}">${isOpen ? "&#9660;" : "&#9658;"}</span>
+        <div class="pool-name" style="color:${color}">Pool ${POOL_NAMES[pi]}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${!isOpen ? `<span style="font-size:.72rem;color:var(--muted)">${done}/${matches.length} done</span>` : ""}
+        <div class="net-badge">Net ${pi+1}</div>
+      </div>
     </div>
+    ${isOpen ? `
     <table class="standings"><thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>PD</th></tr></thead>
     <tbody>${rows}</tbody></table>
     <div class="matches-section">
       <div class="matches-title">Matches (${done}/${matches.length})</div>
       ${matchRows}
-    </div>
+    </div>` : ""}
   </div>`;
 }
 
@@ -277,6 +318,7 @@ function renderTournament() {
 
   const tabs = `
     <div class="tabs">
+      <button class="tab ${tab==="overview"?"on":""}" onclick="setTab('overview')">Overview</button>
       <button class="tab ${tab==="pools"?"on":""}" onclick="setTab('pools')">Pools</button>
       <button class="tab ${tab==="knockout"?"on":""}" onclick="setTab('knockout')">Knockout</button>
       <button class="tab ${tab==="teams"?"on":""}" onclick="setTab('teams')">Teams</button>
@@ -352,7 +394,46 @@ function renderTournament() {
   /* -- KNOCKOUT TAB -- */
   if (tab==="knockout") {
     if (!pools || phase!=="knockout") {
-      content = `<div class="empty"><div class="empty-icon">&#128272;</div><p>${phase==="knockout"?"Loading...":"Pool phase in progress - knockout bracket unlocks after all pool matches."}</p></div>`;
+      // Show bracket skeleton — structure without team names
+      const seedLabels = {
+        qf: ["A1 vs D2","B1 vs C2","C1 vs B2","D1 vs A2"],
+        sf: ["QF1 Winner vs QF2 Winner","QF3 Winner vs QF4 Winner"],
+        final: ["SF1 Winner vs SF2 Winner"],
+      };
+      function skeletonCard(label, stageLabel) {
+        return `
+          <div class="ko-card ko-skeleton">
+            <div class="ko-label">${stageLabel}</div>
+            <div class="ko-skeleton-row">
+              <span class="ko-skeleton-team">TBD</span>
+            </div>
+            <div class="ko-skeleton-divider"></div>
+            <div class="ko-skeleton-row">
+              <span class="ko-skeleton-team">TBD</span>
+            </div>
+            <div class="ko-skeleton-seed">${label}</div>
+          </div>`;
+      }
+      const qfSkel   = seedLabels.qf.map((l,i) => skeletonCard(l, `QF ${i+1}`)).join("");
+      const sfSkel   = seedLabels.sf.map((l,i) => skeletonCard(l, `SF ${i+1}`)).join("");
+      const finSkel  = seedLabels.final.map((l,i) => skeletonCard(l, "&#127942; Final")).join("");
+
+      content = `
+        <div class="ko-notice">
+          &#128274; Pool phase in progress &mdash; bracket seeds shown below. Teams locked in once all pool matches complete.
+        </div>
+        <div class="ko-section">
+          <div class="ko-title">Quarterfinals <div class="ko-title-bar"></div></div>
+          <div class="ko-grid ko-grid-4">${qfSkel}</div>
+        </div>
+        <div class="ko-section">
+          <div class="ko-title">Semifinals <div class="ko-title-bar"></div></div>
+          <div class="ko-grid ko-grid-2">${sfSkel}</div>
+        </div>
+        <div class="ko-section">
+          <div class="ko-title">Final &#127942; <div class="ko-title-bar"></div></div>
+          <div class="ko-grid ko-grid-1">${finSkel}</div>
+        </div>`;
     } else {
       const champBanner = champion ? `
         <div class="champion-banner">
@@ -605,6 +686,69 @@ function renderTournament() {
     }
   }
 
+
+
+  if (tab==="overview") {
+    const rows = (state.daySchedule || []);
+
+    const tableRows = rows.map((row, idx) => {
+      const isFirst = idx === 0;
+      const isLast  = idx === rows.length - 1;
+      if (admin) {
+        return `
+          <tr class="ds-tr">
+            <td class="ds-td ds-td-time">
+              <input class="ds-inp ds-time-inp" value="${esc(row.time)}"
+                placeholder="e.g. 2:00-2:30"
+                oninput="updateDaySchedTime(${idx},this.value)"/>
+            </td>
+            <td class="ds-td ds-td-activity">
+              <input class="ds-inp ds-act-inp" value="${row.activity}"
+                placeholder="Activity description"
+                oninput="updateDaySchedActivity(${idx},this.value)" />
+            </td>
+            <td class="ds-td ds-td-action">
+              <div class="ds-row-actions">
+                <button class="ds-move-btn" onclick="moveDaySchedRow(${idx},-1)"
+                  ${isFirst?"disabled":""} title="Move up">&#9650;</button>
+                <button class="ds-move-btn" onclick="moveDaySchedRow(${idx},1)"
+                  ${isLast?"disabled":""} title="Move down">&#9660;</button>
+                <button class="ds-del-btn" onclick="deleteDaySchedRow(${idx})" title="Remove">&#10005;</button>
+              </div>
+            </td>
+          </tr>`;
+      } else {
+        return `
+          <tr class="ds-tr">
+            <td class="ds-td ds-td-time">${esc(row.time)}</td>
+            <td class="ds-td ds-td-activity">${row.activity}</td>
+          </tr>`;
+      }
+    }).join("");
+
+    const thead = admin
+      ? `<tr><th class="ds-th">Time</th><th class="ds-th">Activity</th><th class="ds-th" style="width:90px"></th></tr>`
+      : `<tr><th class="ds-th">Time</th><th class="ds-th">Activity</th></tr>`;
+
+    content = `
+      <div class="ds-wrap">
+        <div class="ds-header-row">
+          <div>
+            <div class="ds-title">Tournament Overview</div>
+            <div class="ds-subtitle">${rows.length} activities</div>
+          </div>
+          ${admin ? `<div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="addDaySchedRow('top')">+ Add at Top</button>
+            <button class="btn btn-ghost btn-sm" onclick="addDaySchedRow('bottom')">+ Add at Bottom</button>
+            <button class="btn btn-save btn-sm" onclick="saveDaySchedule()">Save</button>
+          </div>` : ""}
+        </div>
+        <table class="ds-table">
+          <thead>${thead}</thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>`;
+  }
 
   if (tab==="inventory") {
     const inv    = state.inventory || { equipment:[], drinks:[] };
