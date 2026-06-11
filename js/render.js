@@ -319,6 +319,7 @@ function renderTournament() {
   const tabs = `
     <div class="tabs">
       <button class="tab ${tab==="overview"?"on":""}" onclick="setTab('overview')">Overview</button>
+      <button class="tab ${tab==="rules"?"on":""}" onclick="setTab('rules')">&#128214; Rules</button>
       <button class="tab ${tab==="pools"?"on":""}" onclick="setTab('pools')">Pools</button>
       <button class="tab ${tab==="knockout"?"on":""}" onclick="setTab('knockout')">Knockout</button>
       <button class="tab ${tab==="teams"?"on":""}" onclick="setTab('teams')">Teams</button>
@@ -933,6 +934,11 @@ function renderTournament() {
       </div>
     `;
   }
+  /* -- RULES TAB (animated SVG explainers) -- */
+  if (tab==="rules") {
+    content = rulesContent();
+  }
+
   return `${hdr}${tabs}<div class="content">${content}</div>`;
 }
 
@@ -945,7 +951,7 @@ function render() {
     root.innerHTML = renderLanding();
   } else {
     // admin: if no pools yet, default to setup tab
-    if (isAdmin() && !state.pools && state.tab!=="setup") state.tab = "setup";
+    if (isAdmin() && !state.pools && state.tab!=="setup" && state.tab!=="rules") state.tab = "setup";
     if (!isAdmin() && (state.tab==="inventory" || state.tab==="setup")) state.tab = "pools";
     root.innerHTML = renderTournament();
   }
@@ -954,6 +960,358 @@ function render() {
     const err = document.getElementById("pin-error");
     if (err) err.style.display = "block";
   }
+}
+
+/* ==========================================================================
+   RULES TAB - animated SVG explainers (CSBV 5.5 "Rules in Motion")
+========================================================================== */
+function rulesContent() {
+  return `
+  <div class="rules-wrap">
+    <div class="rules-intro">
+      <strong style="color:#C8F04A">CSBV 5.5 &bull; Rules in Motion.</strong>
+      Each card below is an animated explainer of a core tournament rule.
+      Share this page directly: <code>mmedabo.github.io/#rules</code>
+    </div>
+    <div class="rules-grid">
+
+    <!-- 1. SERVICE -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Service from either corner">
+      <style>
+        .r1-pulse{animation:r1p 4s ease-in-out infinite}
+        @keyframes r1p{0%,100%{opacity:.45}50%{opacity:1}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">SERVICE</text>
+      <rect x="90" y="70" width="220" height="170" fill="#156066" stroke="#F4E9C8" stroke-width="3" rx="2"/>
+      <line x1="90" y1="155" x2="310" y2="155" stroke="#F4E9C8" stroke-width="4"/>
+      <path d="M100,232 Q150,150 295,86" fill="none" stroke="#EFD9A0" stroke-width="2" stroke-dasharray="5 6" class="r1-pulse"/>
+      <path d="M300,232 Q250,150 105,86" fill="none" stroke="#EFD9A0" stroke-width="2" stroke-dasharray="5 6" class="r1-pulse"/>
+      <g><g>
+        <circle r="11" fill="#F4E9C8"/>
+        <path d="M-11,0 Q0,-7 11,0 M-11,0 Q0,7 11,0 M0,-11 Q5,0 0,11" fill="none" stroke="#0F4347" stroke-width="1.6"/>
+        <animateMotion dur="2.6s" repeatCount="indefinite" path="M100,232 Q150,150 295,86"/>
+      </g></g>
+      <g><g>
+        <circle r="11" fill="#E96B3C"/>
+        <path d="M-11,0 Q0,-7 11,0 M-11,0 Q0,7 11,0 M0,-11 Q5,0 0,11" fill="none" stroke="#0F4347" stroke-width="1.6"/>
+        <animateMotion dur="2.6s" begin="1.3s" repeatCount="indefinite" path="M300,232 Q250,150 105,86"/>
+      </g></g>
+      <circle cx="100" cy="232" r="6" fill="#EFD9A0"/>
+      <circle cx="300" cy="232" r="6" fill="#EFD9A0"/>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">SERVE FROM EITHER CORNER</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Left or right &mdash; your pick</text>
+    </svg>
+    </div>
+
+    <!-- 2. TOUCHES -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Max 3 touches per side">
+      <style>
+        .r2-n{font-family:Oswald,Arial Narrow,sans-serif;font-weight:700;font-size:22px;fill:#EFD9A0;opacity:0;transform-origin:center;transform-box:fill-box}
+        .r2-n1{animation:r2pop 3.3s infinite}
+        .r2-n2{animation:r2pop 3.3s .7s infinite}
+        .r2-n3{animation:r2pop 3.3s 1.4s infinite}
+        @keyframes r2pop{0%{opacity:0;transform:scale(.3)}6%{opacity:1;transform:scale(1.25)}12%{transform:scale(1)}32%{opacity:1}45%,100%{opacity:0}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">TOUCHES</text>
+      <rect x="30" y="238" width="340" height="10" rx="5" fill="#E3CFA0"/>
+      <line x1="300" y1="120" x2="300" y2="243" stroke="#F4E9C8" stroke-width="4"/>
+      <rect x="288" y="120" width="24" height="34" fill="none" stroke="#F4E9C8" stroke-width="2"/>
+      <line x1="288" y1="131" x2="312" y2="131" stroke="#F4E9C8" stroke-width="1.4"/>
+      <line x1="288" y1="142" x2="312" y2="142" stroke="#F4E9C8" stroke-width="1.4"/>
+      <g fill="#E96B3C"><circle cx="110" cy="206" r="11"/><path d="M98,238 Q110,214 122,238 Z"/></g>
+      <g fill="#D88A52"><circle cx="195" cy="206" r="11"/><path d="M183,238 Q195,214 207,238 Z"/></g>
+      <g>
+        <circle r="10" fill="#F4E9C8"/>
+        <path d="M-10,0 Q0,-6 10,0 M-10,0 Q0,6 10,0 M0,-10 Q4.5,0 0,10" fill="none" stroke="#0F4347" stroke-width="1.5"/>
+        <animateMotion dur="3.3s" repeatCount="indefinite" path="M110,186 Q152,105 195,186 Q152,100 118,184 Q235,30 352,200"/>
+      </g>
+      <text class="r2-n r2-n1" x="96" y="158" text-anchor="middle">1</text>
+      <text class="r2-n r2-n2" x="195" y="158" text-anchor="middle">2</text>
+      <text class="r2-n r2-n3" x="132" y="142" text-anchor="middle">3</text>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">MAX 3 TOUCHES PER SIDE</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Block counts as 1 touch &bull; same player can play the 2nd</text>
+    </svg>
+    </div>
+
+    <!-- 3. BALL IN / OUT -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ball on the line is in">
+      <style>
+        .r3-ball{animation:r3drop 3s ease-in infinite;transform-origin:262px 196px;transform-box:view-box}
+        @keyframes r3drop{0%{transform:translateY(-130px) scale(1.7)}38%{transform:translateY(0) scale(1)}46%{transform:translateY(-14px) scale(1.05)}54%{transform:translateY(0) scale(1)}100%{transform:translateY(0) scale(1)}}
+        .r3-sh{animation:r3sh 3s ease-in infinite;transform-origin:262px 208px;transform-box:view-box}
+        @keyframes r3sh{0%{transform:scale(.3);opacity:.15}38%{transform:scale(1);opacity:.4}100%{transform:scale(1);opacity:.4}}
+        .r3-in{opacity:0;animation:r3in 3s infinite;transform-origin:262px 150px;transform-box:view-box}
+        @keyframes r3in{0%,38%{opacity:0;transform:scale(.4)}46%{opacity:1;transform:scale(1.2)}54%{transform:scale(1)}88%{opacity:1}100%{opacity:0}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">BALL IN / OUT</text>
+      <rect x="60" y="80" width="202" height="148" fill="#156066"/>
+      <rect x="60" y="80" width="202" height="148" fill="none" stroke="#F4E9C8" stroke-width="7"/>
+      <text x="140" y="160" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="13" fill="#9CC3BD">COURT</text>
+      <text x="322" y="160" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="13" fill="#9CC3BD">OUT</text>
+      <ellipse class="r3-sh" cx="262" cy="208" rx="16" ry="6" fill="#000"/>
+      <g class="r3-ball">
+        <circle cx="262" cy="196" r="13" fill="#F4E9C8"/>
+        <path d="M249,196 Q262,188 275,196 M249,196 Q262,204 275,196 M262,183 Q268,196 262,209" fill="none" stroke="#0F4347" stroke-width="1.7"/>
+      </g>
+      <g class="r3-in">
+        <rect x="232" y="128" width="60" height="32" rx="16" fill="#7BC47F"/>
+        <text x="262" y="151" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="19" fill="#0F4347">IN!</text>
+      </g>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">ON THE LINE = IN</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Must cross over net, between imaginary antenna lines</text>
+    </svg>
+    </div>
+
+    <!-- 4. SELF-REFEREED -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Self refereed, make fair calls">
+      <style>
+        .r4-arm{animation:r4raise 3s ease-in-out infinite;transform-origin:200px 192px;transform-box:view-box}
+        @keyframes r4raise{0%,15%{transform:rotate(58deg)}35%,75%{transform:rotate(0deg)}95%,100%{transform:rotate(58deg)}}
+        .r4-check{stroke-dasharray:60;stroke-dashoffset:60;animation:r4chk 3s infinite}
+        @keyframes r4chk{0%,35%{stroke-dashoffset:60}55%,80%{stroke-dashoffset:0;opacity:1}95%,100%{stroke-dashoffset:0;opacity:0}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">SELF-REFEREED</text>
+      <circle cx="200" cy="160" r="20" fill="#E96B3C"/>
+      <path d="M170,250 Q200,178 230,250 Z" fill="#E96B3C"/>
+      <g class="r4-arm">
+        <line x1="200" y1="192" x2="258" y2="128" stroke="#E96B3C" stroke-width="11" stroke-linecap="round"/>
+        <rect x="252" y="106" width="18" height="28" rx="8" fill="#F4E9C8" transform="rotate(20 261 120)"/>
+      </g>
+      <circle cx="298" cy="110" r="26" fill="none" stroke="#7BC47F" stroke-width="3" opacity=".9"/>
+      <path class="r4-check" d="M286,110 L295,120 L312,98" fill="none" stroke="#7BC47F" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">MAKE FAIR CALLS</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">No refs &mdash; sportsmanship is the whistle</text>
+    </svg>
+    </div>
+
+    <!-- 5. REPLAY THE POINT -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Disagreement? Replay the point">
+      <style>
+        .r5-spin{animation:r5sp 2.6s linear infinite;transform-origin:200px 165px;transform-box:view-box}
+        @keyframes r5sp{to{transform:rotate(360deg)}}
+        .r5-b1{animation:r5bub 2.6s infinite}
+        .r5-b2{animation:r5bub 2.6s 1.3s infinite}
+        @keyframes r5bub{0%,100%{opacity:.35}50%{opacity:1}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">DISAGREE?</text>
+      <g class="r5-b1">
+        <rect x="56" y="90" width="56" height="42" rx="12" fill="#156066" stroke="#F4E9C8" stroke-width="2"/>
+        <path d="M84,132 L78,146 L96,132 Z" fill="#156066" stroke="#F4E9C8" stroke-width="2"/>
+        <text x="84" y="118" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="20" fill="#EFD9A0">IN</text>
+      </g>
+      <g class="r5-b2">
+        <rect x="288" y="90" width="62" height="42" rx="12" fill="#156066" stroke="#F4E9C8" stroke-width="2"/>
+        <path d="M316,132 L310,146 L328,132 Z" fill="#156066" stroke="#F4E9C8" stroke-width="2"/>
+        <text x="319" y="118" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="20" fill="#E96B3C">OUT</text>
+      </g>
+      <circle cx="200" cy="165" r="22" fill="#F4E9C8"/>
+      <path d="M178,165 Q200,152 222,165 M178,165 Q200,178 222,165 M200,143 Q210,165 200,187" fill="none" stroke="#0F4347" stroke-width="2"/>
+      <g class="r5-spin">
+        <path d="M200,121 A44,44 0 1 1 156,165" fill="none" stroke="#E96B3C" stroke-width="5" stroke-linecap="round"/>
+        <path d="M148,150 L156,165 L168,153 Z" fill="#E96B3C"/>
+      </g>
+      <text x="200" y="244" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="20" fill="#7BC47F" letter-spacing="2">REPLAY THE POINT</text>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">KEEP IT FRIENDLY</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">No arguments &mdash; just run it back</text>
+    </svg>
+    </div>
+
+    <!-- 6. HIGH-FIVE -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Shake hands or high five before and after matches">
+      <style>
+        .r6-l{animation:r6l 2.4s ease-in-out infinite}
+        .r6-r{animation:r6r 2.4s ease-in-out infinite}
+        @keyframes r6l{0%,15%{transform:translateX(-58px) rotate(-8deg)}45%,60%{transform:translateX(0) rotate(0)}90%,100%{transform:translateX(-58px) rotate(-8deg)}}
+        @keyframes r6r{0%,15%{transform:translateX(58px) rotate(8deg)}45%,60%{transform:translateX(0) rotate(0)}90%,100%{transform:translateX(58px) rotate(8deg)}}
+        .r6-burst{opacity:0;animation:r6b 2.4s infinite;transform-origin:200px 158px;transform-box:view-box}
+        @keyframes r6b{0%,42%{opacity:0;transform:scale(.2)}50%{opacity:1;transform:scale(1.15)}68%{opacity:0;transform:scale(1.5)}100%{opacity:0}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="22" fill="#EFD9A0" letter-spacing="2">KEEP UP GOOD VIBES</text>
+      <g class="r6-l" style="transform-box:view-box;transform-origin:160px 170px">
+        <line x1="70" y1="220" x2="172" y2="166" stroke="#E96B3C" stroke-width="14" stroke-linecap="round"/>
+        <g fill="#F4E9C8">
+          <rect x="162" y="138" width="26" height="40" rx="11"/>
+          <rect x="164" y="124" width="6.5" height="22" rx="3"/>
+          <rect x="172" y="120" width="6.5" height="24" rx="3"/>
+          <rect x="180" y="124" width="6.5" height="22" rx="3"/>
+        </g>
+      </g>
+      <g class="r6-r" style="transform-box:view-box;transform-origin:240px 170px">
+        <line x1="330" y1="220" x2="228" y2="166" stroke="#156066" stroke-width="14" stroke-linecap="round"/>
+        <g fill="#F4E9C8">
+          <rect x="212" y="138" width="26" height="40" rx="11"/>
+          <rect x="214" y="124" width="6.5" height="22" rx="3"/>
+          <rect x="222" y="120" width="6.5" height="24" rx="3"/>
+          <rect x="230" y="124" width="6.5" height="22" rx="3"/>
+        </g>
+      </g>
+      <g class="r6-burst" stroke="#EFD9A0" stroke-width="4" stroke-linecap="round">
+        <line x1="200" y1="108" x2="200" y2="88"/>
+        <line x1="166" y1="120" x2="152" y2="106"/>
+        <line x1="234" y1="120" x2="248" y2="106"/>
+        <line x1="156" y1="158" x2="136" y2="158"/>
+        <line x1="244" y1="158" x2="264" y2="158"/>
+      </g>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">HIGH-FIVE BEFORE &amp; AFTER</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Handshakes work too</text>
+    </svg>
+    </div>
+
+    <!-- 7. SWITCH SIDES -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Switch sides every 5 or 7 points">
+      <style>
+        .r7-sun{animation:r7s 8s linear infinite;transform-origin:62px 96px;transform-box:view-box}
+        @keyframes r7s{to{transform:rotate(360deg)}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">SWITCH SIDES</text>
+      <g class="r7-sun" stroke="#EFD9A0" stroke-width="3" stroke-linecap="round">
+        <line x1="62" y1="72" x2="62" y2="62"/><line x1="62" y1="120" x2="62" y2="130"/>
+        <line x1="38" y1="96" x2="28" y2="96"/><line x1="86" y1="96" x2="96" y2="96"/>
+        <line x1="45" y1="79" x2="38" y2="72"/><line x1="79" y1="113" x2="86" y2="120"/>
+        <line x1="79" y1="79" x2="86" y2="72"/><line x1="45" y1="113" x2="38" y2="120"/>
+      </g>
+      <circle cx="62" cy="96" r="14" fill="#E96B3C"/>
+      <rect x="110" y="100" width="220" height="130" fill="#156066" stroke="#F4E9C8" stroke-width="3"/>
+      <line x1="220" y1="100" x2="220" y2="230" stroke="#F4E9C8" stroke-width="4"/>
+      <g>
+        <circle r="10" fill="#E96B3C"/>
+        <animateMotion dur="3.4s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;0.15;0.7;1" calcMode="linear" path="M160,150 C190,80 250,80 282,150"/>
+      </g>
+      <g>
+        <circle r="10" fill="#F4E9C8"/>
+        <animateMotion dur="3.4s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;0.15;0.7;1" calcMode="linear" path="M282,184 C250,254 190,254 160,184"/>
+      </g>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="15" fill="#F4E9C8" letter-spacing="1">SWITCH AT TOTAL 10 (15-PT) &bull; TOTAL 15 (21-PT)</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Add both scores &mdash; e.g. 6&ndash;4 or 8&ndash;7 &rarr; swap ends for sun &amp; wind</text>
+    </svg>
+    </div>
+
+    <!-- 8. NO OPEN-HAND TIP -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No open hand tipping, dunking or touching the net">
+      <style>
+        .r8-hand{animation:r8h 2.2s ease-in-out infinite;transform-box:view-box;transform-origin:185px 160px}
+        @keyframes r8h{0%,100%{transform:translate(-14px,10px)}45%,60%{transform:translate(0,0)}}
+        .r8-slash{stroke-dasharray:230;stroke-dashoffset:230;animation:r8s 2.2s infinite}
+        @keyframes r8s{0%,40%{stroke-dashoffset:230}65%,95%{stroke-dashoffset:0}100%{stroke-dashoffset:0}}
+        .r8-ring{animation:r8r 2.2s infinite}
+        @keyframes r8r{0%,40%{opacity:.35}65%,95%{opacity:1}100%{opacity:.35}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#E04444" letter-spacing="2">NO TIPS / DUNKS</text>
+      <circle cx="238" cy="168" r="24" fill="#F4E9C8"/>
+      <path d="M214,168 Q238,154 262,168 M214,168 Q238,182 262,168 M238,144 Q249,168 238,192" fill="none" stroke="#0F4347" stroke-width="2"/>
+      <g class="r8-hand">
+        <line x1="100" y1="240" x2="172" y2="186" stroke="#E96B3C" stroke-width="13" stroke-linecap="round"/>
+        <g fill="#F4E9C8">
+          <rect x="158" y="150" width="32" height="42" rx="12"/>
+          <rect x="158" y="130" width="7" height="26" rx="3.5" transform="rotate(-18 161 143)"/>
+          <rect x="168" y="126" width="7" height="30" rx="3.5" transform="rotate(-6 171 141)"/>
+          <rect x="178" y="126" width="7" height="30" rx="3.5" transform="rotate(6 181 141)"/>
+          <rect x="188" y="130" width="7" height="26" rx="3.5" transform="rotate(18 191 143)"/>
+        </g>
+      </g>
+      <circle class="r8-ring" cx="205" cy="168" r="74" fill="none" stroke="#E04444" stroke-width="7"/>
+      <line class="r8-slash" x1="152" y1="220" x2="258" y2="116" stroke="#E04444" stroke-width="7" stroke-linecap="round"/>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">NO OPEN-HAND TIP &bull; NO DUNK &bull; NO NET TOUCH</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Use knuckles, cobra or closed fist instead</text>
+    </svg>
+    </div>
+
+    <!-- 9. NO BLOCK / SPIKE ON SERVE -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No blocking or spiking a serve">
+      <style>
+        .r9-blk{animation:r9b 3s ease-out infinite;transform-box:view-box;transform-origin:222px 150px}
+        @keyframes r9b{0%,28%{transform:translateY(46px);opacity:0}38%,80%{transform:translateY(0);opacity:1}92%,100%{transform:translateY(46px);opacity:0}}
+        .r9-x{opacity:0;animation:r9x 3s infinite;transform-origin:236px 118px;transform-box:view-box}
+        @keyframes r9x{0%,40%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.25)}58%{transform:scale(1)}85%{opacity:1}100%{opacity:0}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#E04444" letter-spacing="2">SERVE = HANDS OFF</text>
+      <rect x="30" y="240" width="340" height="10" rx="5" fill="#E3CFA0"/>
+      <line x1="220" y1="118" x2="220" y2="245" stroke="#F4E9C8" stroke-width="4"/>
+      <line x1="206" y1="126" x2="234" y2="126" stroke="#F4E9C8" stroke-width="2"/>
+      <line x1="206" y1="138" x2="234" y2="138" stroke="#F4E9C8" stroke-width="2"/>
+      <path d="M70,210 Q160,70 340,200" fill="none" stroke="#EFD9A0" stroke-width="2" stroke-dasharray="5 6" opacity=".5"/>
+      <g>
+        <circle r="10" fill="#F4E9C8"/>
+        <path d="M-10,0 Q0,-6 10,0 M-10,0 Q0,6 10,0 M0,-10 Q4.5,0 0,10" fill="none" stroke="#0F4347" stroke-width="1.5"/>
+        <animateMotion dur="3s" repeatCount="indefinite" path="M70,210 Q160,70 340,200"/>
+      </g>
+      <g class="r9-blk" fill="#E96B3C">
+        <rect x="228" y="138" width="15" height="40" rx="7"/>
+        <rect x="247" y="142" width="15" height="40" rx="7"/>
+      </g>
+      <g class="r9-x" stroke="#E04444" stroke-width="8" stroke-linecap="round">
+        <line x1="216" y1="98" x2="256" y2="138"/>
+        <line x1="256" y1="98" x2="216" y2="138"/>
+      </g>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">NO BLOCKING / SPIKING A SERVE</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Let the serve come down first</text>
+    </svg>
+    </div>
+
+    <!-- 10. SET RULES -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No set on first and third touch, no set-over on second">
+      <style>
+        .r10-x1{opacity:0;animation:r10x 3.6s 0s infinite;transform-origin:106px 140px;transform-box:view-box}
+        .r10-x3{opacity:0;animation:r10x 3.6s 1.2s infinite;transform-origin:294px 140px;transform-box:view-box}
+        @keyframes r10x{0%,8%{opacity:0;transform:scale(.3)}16%{opacity:1;transform:scale(1.25)}22%{transform:scale(1)}88%{opacity:1}100%{opacity:0}}
+        .r10-c2{opacity:0;animation:r10c 3.6s .6s infinite;transform-origin:200px 140px;transform-box:view-box}
+        @keyframes r10c{0%,8%{opacity:0;transform:scale(.3)}16%{opacity:1;transform:scale(1.2)}22%{transform:scale(1)}88%{opacity:1}100%{opacity:0}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#E04444" letter-spacing="2">SET RULES</text>
+      <g font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="17" fill="#EFD9A0" text-anchor="middle">
+        <text x="106" y="212">1ST</text><text x="200" y="212">2ND</text><text x="294" y="212">3RD</text>
+      </g>
+      <g fill="#F4E9C8">
+        <g transform="translate(106,140)">
+          <circle r="14" fill="#F4E9C8"/><path d="M-14,0 Q0,-8 14,0 M-14,0 Q0,8 14,0" fill="none" stroke="#0F4347" stroke-width="1.6"/>
+          <path d="M-18,24 L-8,12 M-12,26 L-4,14 M18,24 L8,12 M12,26 L4,14" stroke="#E96B3C" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <g transform="translate(200,140)">
+          <circle r="14" fill="#F4E9C8"/><path d="M-14,0 Q0,-8 14,0 M-14,0 Q0,8 14,0" fill="none" stroke="#0F4347" stroke-width="1.6"/>
+          <path d="M-18,24 L-8,12 M-12,26 L-4,14 M18,24 L8,12 M12,26 L4,14" stroke="#E96B3C" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <g transform="translate(294,140)">
+          <circle r="14" fill="#F4E9C8"/><path d="M-14,0 Q0,-8 14,0 M-14,0 Q0,8 14,0" fill="none" stroke="#0F4347" stroke-width="1.6"/>
+          <path d="M-18,24 L-8,12 M-12,26 L-4,14 M18,24 L8,12 M12,26 L4,14" stroke="#E96B3C" stroke-width="5" stroke-linecap="round"/>
+        </g>
+      </g>
+      <g class="r10-x1" stroke="#E04444" stroke-width="7" stroke-linecap="round">
+        <line x1="84" y1="118" x2="128" y2="162"/><line x1="128" y1="118" x2="84" y2="162"/>
+      </g>
+      <g class="r10-x3" stroke="#E04444" stroke-width="7" stroke-linecap="round">
+        <line x1="272" y1="118" x2="316" y2="162"/><line x1="316" y1="118" x2="272" y2="162"/>
+      </g>
+      <g class="r10-c2">
+        <path d="M186,142 L196,152 L216,128" fill="none" stroke="#7BC47F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="200" y="184" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-weight="600" font-size="11" fill="#E04444">NO SET-OVER</text>
+      </g>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">NO SET ON 1ST &amp; 3RD TOUCH</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Set OK on 2nd &mdash; but don't set it over the net</text>
+    </svg>
+    </div>
+
+    </div>
+  </div>`;
 }
 
 export { render, renderLanding, renderTournament };

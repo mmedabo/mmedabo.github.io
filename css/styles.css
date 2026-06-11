@@ -376,11 +376,13 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 
 /* ── TEAM EXPAND IN STANDINGS ── */
 .team-expand-btn{background:none;border:none;cursor:pointer;color:var(--muted);
-  font-size:.7rem;padding:2px 4px;border-radius:4px;line-height:1;flex-shrink:0;
+  font-size:1rem;padding:0;border-radius:6px;line-height:1;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:32px;min-height:32px;
   transition:color .15s,background .15s;}
 .team-expand-btn:hover{color:var(--accent);background:var(--surface);}
 .team-expand-btn.open{color:var(--accent);}
-.team-expand-btn-placeholder{display:inline-block;width:18px;flex-shrink:0;}
+.team-expand-btn-placeholder{display:inline-block;width:32px;flex-shrink:0;}
 .team-player-row td{padding-top:0 !important;padding-bottom:8px !important;}
 .team-player-list{display:flex;gap:8px;flex-wrap:wrap;padding-left:24px;}
 .player-chip{font-size:.72rem;padding:3px 9px;border-radius:10px;font-weight:600;
@@ -391,7 +393,8 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 /* ── POOL CARD EXPAND/COLLAPSE ── */
 .pool-header-clickable{cursor:pointer;user-select:none;transition:background .15s;}
 .pool-header-clickable:hover{background:var(--surface);}
-.pool-chevron{font-size:.75rem;transition:transform .2s;flex-shrink:0;}
+.pool-chevron{font-size:1.05rem;transition:transform .2s;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;min-width:28px;min-height:28px;}
 .pool-collapsed{opacity:.85;}
 .pool-collapsed .pool-header-clickable:hover{opacity:1;}
 
@@ -456,3 +459,13 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 .format-rule-lbl{font-size:.6rem;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;
   text-align:center;margin-top:1px;}
 .format-sep{color:var(--border);font-size:.5rem;}
+
+/* ── RULES (animated SVG explainers) ── */
+.rules-wrap{max-width:1180px;margin:0 auto;}
+.rules-intro{color:var(--muted);font-size:.9rem;line-height:1.55;margin:0 0 18px;}
+.rules-intro code{background:var(--surface);border:1px solid var(--border);border-radius:5px;
+  padding:1px 7px;font-size:.82em;color:var(--accent);}
+.rules-grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}
+.rules-card svg{width:100%;height:auto;display:block;border-radius:14px;
+  box-shadow:0 10px 24px rgba(0,0,0,.35);}
+@media (prefers-reduced-motion: reduce){ .rules-card svg *{animation:none !important;} }

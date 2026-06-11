@@ -79,7 +79,13 @@ window.updateTeamName = (pi,ti,val)=>{
   // Also update pools.teams live if tournament already started
   if (state.pools?.teams?.[pi]) state.pools.teams[pi][ti] = val;
 };
-window.setTab         = (t)=>{ state.tab=t; render(); };
+window.setTab         = (t)=>{
+  state.tab=t;
+  // Reflect the active tab in the URL (no reload) so it can be shared/bookmarked
+  try { history.replaceState(null, "", t === "overview" ? location.pathname : "#" + t); }
+  catch (e) { /* ignore */ }
+  render();
+};
 window.togglePoolExpand = (pi) => {
   state.expandedPools[pi] = !( state.expandedPools[pi] !== false );
   render();
@@ -334,8 +340,29 @@ window.saveDaySchedule = () => {
   if (btn) { btn.textContent = "Saved!"; setTimeout(()=>{ btn.textContent = "Save"; }, 2000); }
 };
 
+/* ==========================================================================
+   HASH ROUTING - deep-link straight to a tab (e.g. mmedabo.github.io/#rules)
+========================================================================== */
+const VALID_TABS = ["overview","pools","knockout","teams","schedule","history","rules"];
+
+function applyHashRoute() {
+  const h = (location.hash || "").replace(/^#/, "");
+  if (!VALID_TABS.includes(h)) return false;
+  // Deep link arriving on the landing screen -> drop the visitor straight into
+  // viewer mode on the requested tab.
+  if (state.role === "landing") {
+    state.role = "viewer";
+    startFirebaseListener();
+  }
+  state.tab = h;
+  return true;
+}
+
+window.addEventListener("hashchange", () => { if (applyHashRoute()) render(); });
+
 /* boot */
-if (isConfigured) {
+const hadRoute = applyHashRoute();
+if (isConfigured && !hadRoute) {
   // Show a loading screen until Firebase responds, then render
   document.getElementById("root").innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -345,5 +372,6 @@ if (isConfigured) {
     </div>`;
   startFirebaseListener();
 } else {
+  // Either no Firebase, or a deep link already started the listener + set the tab.
   render();
 }
