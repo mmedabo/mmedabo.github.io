@@ -113,7 +113,13 @@ function poolCardHTML(pi) {
     const byeTeam = roundMatches[0].byeTeam;
     const byeName = teams[byeTeam] || `Team ${byeTeam+1}`;
 
-    const matchBlocks = roundMatches.map(m => {
+    const matchBlocks = roundMatches.map((m, mi) => {
+      // Court per match: schedule override if set, else the pool's own courts
+      // in order within the round (A1, A2 for pool A, B1, B2 for pool B, ...)
+      const sched = state.schedule[m.id] || {};
+      const legacy = /^Court ([1-8])$/.exec(sched.court || "");
+      const court = legacy ? COURT_NAMES[+legacy[1] - 1]
+                           : (sched.court || COURT_NAMES[pi*2 + (mi % 2)]);
       const t1=teams[m.t1], t2=teams[m.t2];
       const w1=m.status==="done"&&m.s1>m.s2, w2=m.status==="done"&&m.s2>m.s1;
       const isEd=state.editingMatch===m.id;
@@ -157,6 +163,7 @@ function poolCardHTML(pi) {
         <div class="match-block ${m.status==="done"?"match-done":""}">
           <div class="match-row">
             <span class="slot-num">${m.slot}</span>
+            <span class="court-tag">${esc(court.replace(/^Court /, ""))}</span>
             <span class="status-dot dot-${m.status}"></span>
             <div class="match-teams">
               <span class="match-team-name ${w1?"won":w2?"lost":""}">${esc(t1)}</span>
