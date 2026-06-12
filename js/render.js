@@ -984,31 +984,66 @@ function rulesContent() {
 
     <!-- 1. SERVICE -->
     <div class="rules-card">
-    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Service from either corner">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Serve from anywhere behind the back line, within the corner limits">
       <style>
-        .r1-pulse{animation:r1p 4s ease-in-out infinite}
-        @keyframes r1p{0%,100%{opacity:.45}50%{opacity:1}}
+        .r1-zone{animation:r1z 2.4s ease-in-out infinite}
+        @keyframes r1z{0%,100%{opacity:.12}50%{opacity:.3}}
+        .r1-a1{animation:r1g1 5s linear infinite}
+        .r1-a2{animation:r1g2 5s linear infinite}
+        .r1-a3{animation:r1g3 5s linear infinite}
+        @keyframes r1g1{0%,6%{opacity:1}18%,82%{opacity:.2}94%,100%{opacity:1}}
+        @keyframes r1g2{0%,13%{opacity:.2}25%{opacity:1}37%,63%{opacity:.2}75%{opacity:1}87%,100%{opacity:.2}}
+        @keyframes r1g3{0%,38%{opacity:.2}50%{opacity:1}62%,100%{opacity:.2}}
       </style>
       <rect width="400" height="330" rx="14" fill="#0F4347"/>
       <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">SERVICE</text>
-      <rect x="90" y="70" width="220" height="170" fill="#156066" stroke="#F4E9C8" stroke-width="3" rx="2"/>
-      <line x1="90" y1="155" x2="310" y2="155" stroke="#F4E9C8" stroke-width="4"/>
-      <path d="M100,232 Q150,150 295,86" fill="none" stroke="#EFD9A0" stroke-width="2" stroke-dasharray="5 6" class="r1-pulse"/>
-      <path d="M300,232 Q250,150 105,86" fill="none" stroke="#EFD9A0" stroke-width="2" stroke-dasharray="5 6" class="r1-pulse"/>
-      <g><g>
-        <circle r="11" fill="#F4E9C8"/>
-        <path d="M-11,0 Q0,-7 11,0 M-11,0 Q0,7 11,0 M0,-11 Q5,0 0,11" fill="none" stroke="#0F4347" stroke-width="1.6"/>
-        <animateMotion dur="2.6s" repeatCount="indefinite" path="M100,232 Q150,150 295,86"/>
-      </g></g>
+      <rect x="90" y="70" width="220" height="160" fill="#156066" stroke="#F4E9C8" stroke-width="3" rx="2"/>
+      <line x1="90" y1="150" x2="310" y2="150" stroke="#F4E9C8" stroke-width="4"/>
+      <!-- serving zone: the area behind the back line, bounded by the corner limits -->
+      <rect x="90" y="234" width="220" height="28" rx="6" fill="#EFD9A0" class="r1-zone"/>
+      <line x1="90" y1="232" x2="90" y2="264" stroke="#EFD9A0" stroke-width="2.5" stroke-dasharray="4 4"/>
+      <line x1="310" y1="232" x2="310" y2="264" stroke="#EFD9A0" stroke-width="2.5" stroke-dasharray="4 4"/>
+      <circle cx="90" cy="230" r="6" fill="#EFD9A0"/>
+      <circle cx="310" cy="230" r="6" fill="#EFD9A0"/>
+      <!-- serve arrows light up as the ball slides past each spot -->
+      <g class="r1-a1" stroke="#EFD9A0" fill="#EFD9A0">
+        <path d="M105,236 L152,98" fill="none" stroke-width="2" stroke-dasharray="5 6"/>
+        <polygon points="152,90 145,103 159,101" stroke="none"/>
+      </g>
+      <g class="r1-a2" stroke="#EFD9A0" fill="#EFD9A0">
+        <path d="M200,236 L200,96" fill="none" stroke-width="2" stroke-dasharray="5 6"/>
+        <polygon points="200,88 193,101 207,101" stroke="none"/>
+      </g>
+      <g class="r1-a3" stroke="#EFD9A0" fill="#EFD9A0">
+        <path d="M295,236 L248,98" fill="none" stroke-width="2" stroke-dasharray="5 6"/>
+        <polygon points="248,90 241,101 255,103" stroke="none"/>
+      </g>
+      <!-- served balls: fly over the net as the slider passes each launch spot -->
+      <g opacity="0">
+        <circle r="8" fill="#F4E9C8"/>
+        <path d="M-8,0 Q0,-5 8,0 M-8,0 Q0,5 8,0 M0,-8 Q4,0 0,8" fill="none" stroke="#0F4347" stroke-width="1.3"/>
+        <animate attributeName="opacity" calcMode="discrete" dur="5s" repeatCount="indefinite" keyTimes="0;0.15" values="1;0"/>
+        <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.15;1" path="M105,238 L158,82"/>
+      </g>
+      <g opacity="0">
+        <circle r="8" fill="#F4E9C8"/>
+        <path d="M-8,0 Q0,-5 8,0 M-8,0 Q0,5 8,0 M0,-8 Q4,0 0,8" fill="none" stroke="#0F4347" stroke-width="1.3"/>
+        <animate attributeName="opacity" calcMode="discrete" dur="5s" repeatCount="indefinite" keyTimes="0;0.25;0.4" values="0;1;0"/>
+        <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;1" keyTimes="0;0.25;0.4;1" path="M200,238 L200,80"/>
+      </g>
+      <g opacity="0">
+        <circle r="8" fill="#F4E9C8"/>
+        <path d="M-8,0 Q0,-5 8,0 M-8,0 Q0,5 8,0 M0,-8 Q4,0 0,8" fill="none" stroke="#0F4347" stroke-width="1.3"/>
+        <animate attributeName="opacity" calcMode="discrete" dur="5s" repeatCount="indefinite" keyTimes="0;0.5;0.65" values="0;1;0"/>
+        <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;1" keyTimes="0;0.5;0.65;1" path="M295,238 L242,82"/>
+      </g>
       <g><g>
         <circle r="11" fill="#E96B3C"/>
         <path d="M-11,0 Q0,-7 11,0 M-11,0 Q0,7 11,0 M0,-11 Q5,0 0,11" fill="none" stroke="#0F4347" stroke-width="1.6"/>
-        <animateMotion dur="2.6s" begin="1.3s" repeatCount="indefinite" path="M300,232 Q250,150 105,86"/>
+        <animateMotion dur="5s" repeatCount="indefinite" path="M102,248 L298,248 L102,248"/>
       </g></g>
-      <circle cx="100" cy="232" r="6" fill="#EFD9A0"/>
-      <circle cx="300" cy="232" r="6" fill="#EFD9A0"/>
-      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">SERVE FROM EITHER CORNER</text>
-      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Left or right &mdash; your pick</text>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="15" fill="#F4E9C8" letter-spacing="1">SERVE ANYWHERE BEHIND THE LINE</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Within the corner limits &mdash; left, right or in between</text>
     </svg>
     </div>
 
