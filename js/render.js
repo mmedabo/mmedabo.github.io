@@ -1,4 +1,4 @@
-import { POOL_NAMES, POOL_COLORS, DEFAULT_TEAMS } from "./config.js";
+import { POOL_NAMES, POOL_COLORS, COURT_NAMES, DEFAULT_TEAMS } from "./config.js";
 import { esc, computeStandings } from "./helpers.js";
 import { state, isAdmin, isConfigured } from "./state.js";
 
@@ -188,8 +188,8 @@ function poolCardHTML(pi) {
         <div class="pool-name" style="color:${color}">Pool ${POOL_NAMES[pi]}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
-        ${!isOpen ? `<span style="font-size:.72rem;color:var(--muted)">${done}/${matches.length} done</span>` : ""}
-        <div class="net-badge">Net ${pi+1}</div>
+        <span style="font-size:.72rem;color:var(--muted)">${done}/${matches.length} done</span>
+        <div class="net-badge">Courts ${POOL_NAMES[pi]}1, ${POOL_NAMES[pi]}2</div>
       </div>
     </div>
     ${isOpen ? `
@@ -594,7 +594,6 @@ function renderTournament() {
         <div style="font-size:.83rem;margin-top:6px">Schedule will appear once the tournament begins.</div>
       </div>`;
     } else {
-      const NUM_COURTS = 8;
       const allPoolMatches = pools.matches.flatMap((pm, pi) =>
         pm.map(m => ({ ...m, poolIdx: pi, poolName: POOL_NAMES[pi], poolColor: POOL_COLORS[pi],
           t1name: pools.teams[pi][m.t1], t2name: pools.teams[pi][m.t2] }))
@@ -602,7 +601,9 @@ function renderTournament() {
 
       const schedRows = allPoolMatches.map(m => {
         const sched = state.schedule[m.id] || {};
-        const court = sched.court || "";
+        // Map legacy "Court N" values saved before courts were renamed A1-D2
+        const legacy = /^Court ([1-8])$/.exec(sched.court || "");
+        const court = legacy ? COURT_NAMES[+legacy[1] - 1] : (sched.court || "");
         const time  = sched.time  || "";
         const statusDot = `<span class="status-dot dot-${m.status}" style="flex-shrink:0"></span>`;
         const scoreStr = m.status==="done" ? `${m.s1}\u2013${m.s2}` : m.status==="live" ? "LIVE" : "\u2014";
@@ -610,7 +611,7 @@ function renderTournament() {
         const courtCell = admin
           ? `<select class="sched-sel" onchange="setScheduleCourt('${m.id}',this.value)">
                <option value="">\u2014</option>
-               ${Array.from({length:NUM_COURTS},(_,i)=>"<option value=\"Court "+(i+1)+"\" "+(court==="Court "+(i+1)?"selected":"")+">"+"Court "+(i+1)+"</option>").join("")}
+               ${COURT_NAMES.map(c=>`<option value="${c}" ${court===c?"selected":""}>${c}</option>`).join("")}
              </select>`
           : `<span style="color:${court?"var(--text)":"var(--muted)"}">${court||"\u2014"}</span>`;
 
