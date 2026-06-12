@@ -114,12 +114,13 @@ function poolCardHTML(pi) {
     const byeName = teams[byeTeam] || `Team ${byeTeam+1}`;
 
     const matchBlocks = roundMatches.map((m, mi) => {
-      // Court per match: schedule override if set, else the pool's own courts
-      // in order within the round (A1, A2 for pool A, B1, B2 for pool B, ...)
+      // Court per match: schedule override if set, else the pool's own courts.
+      // Orientation alternates each round (R1: c1,c2 / R2: c2,c1 / ...) so that
+      // every team plays exactly 2 of its 4 matches on each court.
       const sched = state.schedule[m.id] || {};
       const legacy = /^Court ([1-8])$/.exec(sched.court || "");
       const court = legacy ? COURT_NAMES[+legacy[1] - 1]
-                           : (sched.court || COURT_NAMES[pi*2 + (mi % 2)]);
+                           : (sched.court || COURT_NAMES[pi*2 + ((mi + +roundNum + 1) % 2)]);
       const t1=teams[m.t1], t2=teams[m.t2];
       const w1=m.status==="done"&&m.s1>m.s2, w2=m.status==="done"&&m.s2>m.s1;
       const isEd=state.editingMatch===m.id;
