@@ -1308,9 +1308,9 @@ function rulesContent() {
     </svg>
     </div>
 
-    <!-- 10. SET RULES -->
+    <!-- 10. FINGER SET RULES -->
     <div class="rules-card">
-    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No set on first and third touch, no set-over on second">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No finger set on first and third touch, no set-over on second">
       <style>
         .r10-x1{opacity:0;animation:r10x 3.6s 0s infinite;transform-origin:106px 140px;transform-box:view-box}
         .r10-x3{opacity:0;animation:r10x 3.6s 1.2s infinite;transform-origin:294px 140px;transform-box:view-box}
@@ -1319,7 +1319,7 @@ function rulesContent() {
         @keyframes r10c{0%,8%{opacity:0;transform:scale(.3)}16%{opacity:1;transform:scale(1.2)}22%{transform:scale(1)}88%{opacity:1}100%{opacity:0}}
       </style>
       <rect width="400" height="330" rx="14" fill="#0F4347"/>
-      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#E04444" letter-spacing="2">SET RULES</text>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#E04444" letter-spacing="2">FINGER SET RULES</text>
       <g font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="17" fill="#EFD9A0" text-anchor="middle">
         <text x="106" y="212">1ST</text><text x="200" y="212">2ND</text><text x="294" y="212">3RD</text>
       </g>
