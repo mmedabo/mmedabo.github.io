@@ -301,7 +301,7 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 .inv-kpi-div{width:1px;background:var(--border);height:32px;flex-shrink:0;}
 
 .inv-section-block{background:var(--card);border:1px solid var(--border);border-radius:12px;
-  overflow:hidden;margin-bottom:16px;}
+  overflow:hidden;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:16px;}
 .inv-section-hdr{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700;
   letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);
   padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--border);}
@@ -314,7 +314,7 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 .inv-tr:last-child{border-bottom:none;}
 .inv-tr:hover{background:var(--surface);}
 .inv-td{padding:10px 14px;vertical-align:middle;}
-.inv-td-name{font-weight:600;}
+.inv-td-name{font-weight:600;min-width:130px;}
 .inv-td-assign{min-width:160px;}
 
 .inv-inline-inp{background:transparent;border:none;border-bottom:1px solid transparent;

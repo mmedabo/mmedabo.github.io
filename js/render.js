@@ -954,6 +954,13 @@ function render() {
     if (isAdmin() && !state.pools && state.tab!=="setup" && state.tab!=="rules") state.tab = "setup";
     if (!isAdmin() && (state.tab==="inventory" || state.tab==="setup")) state.tab = "pools";
     root.innerHTML = renderTournament();
+    // innerHTML replacement resets the tab strip's horizontal scroll; keep the
+    // active tab visible (centered) so it doesn't vanish off-screen on mobile
+    const tabsEl = root.querySelector(".tabs");
+    const onTab = tabsEl && tabsEl.querySelector(".tab.on");
+    if (onTab) {
+      tabsEl.scrollLeft = Math.max(0, onTab.offsetLeft - (tabsEl.clientWidth - onTab.offsetWidth) / 2);
+    }
   }
   // Re-attach pin modal if on landing
   if (state.pinError) {
