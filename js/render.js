@@ -511,6 +511,11 @@ function renderTournament() {
         </div>`;
       };
       const champBanner = champion ? `
+        <div class="winners-photo-wrap">
+          <img src="images/winners.jpg" class="winners-photo" alt="CSBV 5.5 Champions"
+            onerror="this.closest('.winners-photo-wrap').remove()"/>
+          <div class="winners-photo-cap">&#127942; CSBV 5.5 Champions</div>
+        </div>
         <div class="podium">
           ${podiumStep(2,"&#129352;","Runner-up",silver,"silver")}
           ${podiumStep(1,"&#129351;","Champion",champion,"gold")}
