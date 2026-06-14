@@ -518,9 +518,9 @@ function renderTournament() {
         </div>`;
       const champBanner = champion ? `
         <div class="winners-photo-wrap">
-          <img src="images/winners.jpg" class="winners-photo" alt="CSBV 5.5 Champions"
+          <img src="images/allwinner.jpg" class="winners-photo" alt="CSBV 5.5 Winners"
             onerror="this.closest('.winners-photo-wrap').remove()"/>
-          <div class="winners-photo-cap">&#127942; CSBV 5.5 Champions</div>
+          <div class="winners-photo-cap">&#127942; CSBV 5.5 Podium Finishers</div>
         </div>
         <div class="podium">
           ${podiumStep(2,"&#129352;","Runner-up",silver,"silver")}
@@ -564,7 +564,13 @@ function renderTournament() {
         <div class="ko-section">
           <div class="ko-title">Final &#127942; &amp; 3rd Place &#129353; <div class="ko-title-bar"></div></div>
           <div class="ko-grid ko-grid-2">${finalCard}${thirdCard}</div>
-        </div>`;
+        </div>
+        ${champion ? `
+        <div class="group-photo-wrap">
+          <img src="images/tourn55group.jpg" class="group-photo" alt="CSBV 5.5 — Everyone"
+            onerror="if(this.dataset.f){this.closest('.group-photo-wrap').remove()}else{this.dataset.f=1;this.src='images/tourn55group.png'}"/>
+          <div class="group-photo-cap">&#127958; CSBV 5.5 &mdash; Till the next one!</div>
+        </div>` : ""}`;
     }
   }
 
