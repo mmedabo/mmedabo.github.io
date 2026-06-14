@@ -10,6 +10,11 @@ function renderLanding() {
     <div class="landing-wrap">
       <img src="images/logo.jpg" class="landing-logo-img" alt="CSBV Logo"/>
       <img src="images/poster.jpg" class="landing-poster-img" alt="5.5 CSBV Tournament"/>
+      <div class="landing-group-wrap">
+        <img src="images/tourn55group.jpg" class="landing-group-img" alt="CSBV 5.5 — The whole crew"
+          onerror="this.closest('.landing-group-wrap').remove()"/>
+        <div class="landing-group-cap">&#127958; CSBV 5.5 &mdash; The whole crew</div>
+      </div>
       <div class="landing-sub" style="margin-top:24px">4 Pools . 5 Teams per Pool . Pool -> QF -> SF -> Final</div>
       <div class="landing-cards">
 

@@ -15,6 +15,11 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 .landing-wrap{display:flex;flex-direction:column;align-items:center;padding:40px 16px 40px;text-align:center;}
 .landing-logo-img{width:160px;height:160px;object-fit:contain;border-radius:50%;margin-bottom:16px;box-shadow:0 0 40px #FF6B3D44;}
 .landing-poster-img{width:100%;max-width:420px;border-radius:16px;object-fit:cover;box-shadow:0 8px 40px #00000088;margin-bottom:8px;}
+.landing-group-wrap{width:100%;max-width:520px;margin-top:18px;text-align:center;}
+.landing-group-img{width:100%;border-radius:16px;object-fit:cover;border:1px solid var(--border);
+  box-shadow:0 8px 40px #00000088;display:block;}
+.landing-group-cap{font-family:'Barlow Condensed',sans-serif;font-size:.8rem;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);margin-top:10px;}
 .landing-sub{font-size:.8rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:6px;margin-bottom:32px;}
 .landing-cards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;width:100%;max-width:560px;}
 
