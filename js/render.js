@@ -11,8 +11,11 @@ function renderLanding() {
       <img src="images/logo.jpg" class="landing-logo-img" alt="CSBV Logo"/>
       <img src="images/poster.jpg" class="landing-poster-img" alt="5.5 CSBV Tournament"/>
       <div class="landing-group-wrap">
-        <img src="images/tourn55group.jpg" class="landing-group-img" alt="CSBV 5.5 — The whole crew"
-          onerror="this.closest('.landing-group-wrap').remove()"/>
+        <div class="stamped-photo">
+          <img src="images/tourn55group.jpg" class="landing-group-img" alt="CSBV 5.5 — The whole crew"
+            onerror="this.closest('.landing-group-wrap').remove()"/>
+          <img src="images/logo.jpg" class="photo-stamp" alt="CSBV" onerror="this.remove()"/>
+        </div>
         <div class="landing-group-cap">&#127958; CSBV 5.5 &mdash; The whole crew</div>
       </div>
       <div class="landing-sub" style="margin-top:24px">4 Pools . 5 Teams per Pool . Pool -> QF -> SF -> Final</div>
@@ -572,8 +575,11 @@ function renderTournament() {
         </div>
         ${champion ? `
         <div class="group-photo-wrap">
-          <img src="images/tourn55group.jpg" class="group-photo" alt="CSBV 5.5 — Everyone"
-            onerror="if(this.dataset.f){this.closest('.group-photo-wrap').remove()}else{this.dataset.f=1;this.src='images/tourn55group.png'}"/>
+          <div class="stamped-photo">
+            <img src="images/tourn55group.jpg" class="group-photo" alt="CSBV 5.5 — Everyone"
+              onerror="if(this.dataset.f){this.closest('.group-photo-wrap').remove()}else{this.dataset.f=1;this.src='images/tourn55group.png'}"/>
+            <img src="images/logo.jpg" class="photo-stamp" alt="CSBV" onerror="this.remove()"/>
+          </div>
           <div class="group-photo-cap">&#127958; CSBV 5.5 &mdash; Till the next one!</div>
         </div>` : ""}`;
     }
