@@ -198,8 +198,10 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 /* ── PODIUM (Gold / Silver / Bronze) ── */
 .podium{display:grid;grid-template-columns:1fr 1.2fr 1fr;align-items:end;gap:12px;
   max-width:560px;margin:0 auto 28px;}
-.podium-step{background:linear-gradient(135deg,#14110A,#1E1A0C);border:1px solid var(--border);
-  border-radius:14px 14px 0 0;padding:16px 10px 12px;text-align:center;}
+.podium-step{display:flex;flex-direction:column;border:1px solid var(--border);
+  border-bottom:none;border-radius:14px 14px 0 0;overflow:hidden;text-align:center;}
+.podium-top{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
+  background:linear-gradient(135deg,#14110A,#1E1A0C);padding:14px 8px 12px;}
 .podium-medal{font-size:2rem;line-height:1;margin-bottom:6px;}
 .podium-place{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:2px;
   text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
@@ -210,20 +212,29 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 .podium-gold .podium-players{color:#FFE08A;text-shadow:0 0 10px #FFD16655;}
 .podium-silver .podium-players{color:#E6ECF5;}
 .podium-bronze .podium-players{color:#F0B07E;}
-.podium-bar{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;
-  margin-top:10px;padding-top:8px;border-top:1px solid var(--border);opacity:.5;}
+/* Coloured step block — descending heights form the podium staircase */
+.podium-bar{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;
+  display:flex;align-items:center;justify-content:center;
+  border-top:1px solid var(--border);}
+.podium-gold .podium-bar{height:64px;}
+.podium-silver .podium-bar{height:42px;}
+.podium-bronze .podium-bar{height:28px;}
 .podium-gold{border-color:var(--gold);box-shadow:0 0 24px -8px var(--gold);}
 .podium-gold .podium-medal{font-size:2.6rem;}
-.podium-gold .podium-place,.podium-gold .podium-name,.podium-gold .podium-bar{color:var(--gold);}
+.podium-gold .podium-place,.podium-gold .podium-name{color:var(--gold);}
+.podium-gold .podium-bar{color:#1E1A08;background:var(--gold);border-top-color:var(--gold);}
 .podium-gold .podium-name{font-size:1.6rem;}
 .podium-silver{border-color:#C8D0DA88;}
-.podium-silver .podium-place,.podium-silver .podium-name,.podium-silver .podium-bar{color:#C8D0DA;}
+.podium-silver .podium-place,.podium-silver .podium-name{color:#C8D0DA;}
+.podium-silver .podium-bar{color:#14110A;background:#C8D0DA;border-top-color:#C8D0DA;}
 .podium-silver .podium-name{font-size:1.2rem;}
 .podium-bronze{border-color:#CD7F3288;}
-.podium-bronze .podium-place,.podium-bronze .podium-name,.podium-bronze .podium-bar{color:#D9925A;}
+.podium-bronze .podium-place,.podium-bronze .podium-name{color:#D9925A;}
+.podium-bronze .podium-bar{color:#14110A;background:#CD7F32;border-top-color:#CD7F32;}
 .podium-bronze .podium-name{font-size:1.2rem;}
 @media(max-width:480px){.podium{gap:6px;}.podium-gold .podium-name{font-size:1.2rem;}
-  .podium-silver .podium-name,.podium-bronze .podium-name{font-size:.95rem;}}
+  .podium-silver .podium-name,.podium-bronze .podium-name{font-size:.95rem;}
+  .podium-top{padding:12px 5px;}}
 
 /* ── SETUP ── */
 .setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}

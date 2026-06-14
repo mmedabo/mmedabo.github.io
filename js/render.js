@@ -501,10 +501,12 @@ function renderTournament() {
           ? `<div class="podium-players">${players.map(p=>esc(p)).join(" &bull; ")}</div>` : "";
         return `
         <div class="podium-step podium-${cls}">
-          <div class="podium-medal">${medal}</div>
-          <div class="podium-place">${label}</div>
-          <div class="podium-name">${name?esc(name):"&mdash;"}</div>
-          ${playersHTML}
+          <div class="podium-top">
+            <div class="podium-medal">${medal}</div>
+            <div class="podium-place">${label}</div>
+            <div class="podium-name">${name?esc(name):"&mdash;"}</div>
+            ${playersHTML}
+          </div>
           <div class="podium-bar">${place}</div>
         </div>`;
       };
