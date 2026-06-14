@@ -176,6 +176,7 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 @media(max-width:560px){.ko-grid-4,.ko-grid-2{grid-template-columns:1fr;}}
 .ko-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;}
 .ko-card.final-card{border-color:#FFD16655;background:#1E1A08;}
+.ko-card.third-card{border-color:#CD7F3255;background:#1C1408;}
 .ko-label{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:2px;color:var(--muted);
   text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
 .ko-match-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);}
@@ -193,6 +194,36 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 .champion-label{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;letter-spacing:3px;color:var(--gold);
   text-transform:uppercase;margin-bottom:6px;}
 .champion-name{font-family:'Barlow Condensed',sans-serif;font-size:2.8rem;font-weight:900;color:var(--gold);letter-spacing:2px;}
+
+/* ── PODIUM (Gold / Silver / Bronze) ── */
+.podium{display:grid;grid-template-columns:1fr 1.2fr 1fr;align-items:end;gap:12px;
+  max-width:560px;margin:0 auto 28px;}
+.podium-step{background:linear-gradient(135deg,#14110A,#1E1A0C);border:1px solid var(--border);
+  border-radius:14px 14px 0 0;padding:16px 10px 12px;text-align:center;}
+.podium-medal{font-size:2rem;line-height:1;margin-bottom:6px;}
+.podium-place{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.podium-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:1px;
+  line-height:1.1;word-break:break-word;}
+.podium-players{font-family:'Hanken Grotesk',sans-serif;font-size:.74rem;font-weight:600;line-height:1.35;
+  color:var(--text);margin-top:5px;word-break:break-word;}
+.podium-gold .podium-players{color:#FFE08A;text-shadow:0 0 10px #FFD16655;}
+.podium-silver .podium-players{color:#E6ECF5;}
+.podium-bronze .podium-players{color:#F0B07E;}
+.podium-bar{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;
+  margin-top:10px;padding-top:8px;border-top:1px solid var(--border);opacity:.5;}
+.podium-gold{border-color:var(--gold);box-shadow:0 0 24px -8px var(--gold);}
+.podium-gold .podium-medal{font-size:2.6rem;}
+.podium-gold .podium-place,.podium-gold .podium-name,.podium-gold .podium-bar{color:var(--gold);}
+.podium-gold .podium-name{font-size:1.6rem;}
+.podium-silver{border-color:#C8D0DA88;}
+.podium-silver .podium-place,.podium-silver .podium-name,.podium-silver .podium-bar{color:#C8D0DA;}
+.podium-silver .podium-name{font-size:1.2rem;}
+.podium-bronze{border-color:#CD7F3288;}
+.podium-bronze .podium-place,.podium-bronze .podium-name,.podium-bronze .podium-bar{color:#D9925A;}
+.podium-bronze .podium-name{font-size:1.2rem;}
+@media(max-width:480px){.podium{gap:6px;}.podium-gold .podium-name{font-size:1.2rem;}
+  .podium-silver .podium-name,.podium-bronze .podium-name{font-size:.95rem;}}
 
 /* ── SETUP ── */
 .setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}

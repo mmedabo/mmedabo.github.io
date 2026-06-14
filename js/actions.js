@@ -12,6 +12,7 @@ function startTournament() {
   const koMatches = {
     qf: Array(4).fill(null).map((_,i)=>({id:`qf${i}`,t1:null,t2:null,s1:null,s2:null,status:"pending"})),
     sf: Array(2).fill(null).map((_,i)=>({id:`sf${i}`,t1:null,t2:null,s1:null,s2:null,status:"pending"})),
+    third: [{id:"third",t1:null,t2:null,s1:null,s2:null,status:"pending"}],
     final: [{id:"final",t1:null,t2:null,s1:null,s2:null,status:"pending"}],
   };
   state.pools = { teams, matches, koMatches };
@@ -73,6 +74,14 @@ function advanceToKnockout() {
 }
 
 function saveKOScore(stage, id, s1, s2) {
+  if (!state.pools.koMatches[stage]) state.pools.koMatches[stage] = [];
+  // Seed the 3rd-place match from the semi-final losers if the saved bracket
+  // predates the feature (so it can be scored on already-finished tournaments).
+  if (stage==="third" && !state.pools.koMatches.third.some(m=>m.id===id)) {
+    const sfDone = (state.pools.koMatches.sf||[]).filter(m=>m.status==="done");
+    const l = sfDone.map(m=>m.s1>m.s2?m.t2:m.t1);
+    state.pools.koMatches.third = [{id:"third",t1:l[0],t2:l[1],s1:null,s2:null,status:"pending"}];
+  }
   state.pools.koMatches[stage] = state.pools.koMatches[stage].map(m=>
     m.id!==id ? m : {...m, s1, s2, status:"done"}
   );
@@ -90,11 +99,14 @@ function saveKOScore(stage, id, s1, s2) {
     const done = state.pools.koMatches.sf.filter(m=>m.status==="done");
     if (done.length===2) {
       const w = done.map(m=>m.s1>m.s2?m.t1:m.t2);
+      const l = done.map(m=>m.s1>m.s2?m.t2:m.t1);
       state.pools.koMatches.final = [{id:"final",t1:w[0],t2:w[1],s1:null,s2:null,status:"pending"}];
+      // 3rd-place playoff between the two semi-final losers
+      state.pools.koMatches.third = [{id:"third",t1:l[0],t2:l[1],s1:null,s2:null,status:"pending"}];
     }
   }
   const scored = state.pools.koMatches[stage].find(m=>m.id===id);
-  const stageLabel = {qf:"Quarter-Final",sf:"Semi-Final",final:"Final"}[stage] || stage;
+  const stageLabel = {qf:"Quarter-Final",sf:"Semi-Final",third:"3rd-Place",final:"Final"}[stage] || stage;
   addAuditEntry({ type:"ko", action:"score", stage,
     matchId: id, t1: scored.t1, t2: scored.t2, s1, s2,
     label:`${stageLabel}: ${scored.t1} ${s1}-${s2} ${scored.t2}` });
@@ -105,7 +117,7 @@ function saveKOScore(stage, id, s1, s2) {
 
 function resetKOMatch(stage, id) {
   const match = state.pools.koMatches[stage].find(m=>m.id===id);
-  const stageLabel = {qf:"Quarter-Final",sf:"Semi-Final",final:"Final"}[stage] || stage;
+  const stageLabel = {qf:"Quarter-Final",sf:"Semi-Final",third:"3rd-Place",final:"Final"}[stage] || stage;
   state.pools.koMatches[stage] = state.pools.koMatches[stage].map(m=>
     m.id!==id ? m : {...m, s1:null, s2:null, status:"pending"}
   );

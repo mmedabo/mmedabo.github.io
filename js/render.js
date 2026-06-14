@@ -214,8 +214,9 @@ function poolCardHTML(pi) {
    RENDER - KO CARD (shared, admin flag gates editing)
 ========================================================================== */
 function koCardHTML(m, stage, idx) {
-  const labels   = {qf:`QF ${idx+1}`,sf:`SF ${idx+1}`,final:"&#127942; Final"};
+  const labels   = {qf:`QF ${idx+1}`,sf:`SF ${idx+1}`,third:"&#129353; 3rd Place",final:"&#127942; Final"};
   const isFinal  = stage==="final";
+  const isThird  = stage==="third";
   const tbd      = !m.t1 && !m.t2;
   const w1=m.status==="done"&&m.s1>m.s2, w2=m.status==="done"&&m.s2>m.s1;
   const isEd     = state.koEditing===m.id;
@@ -223,6 +224,7 @@ function koCardHTML(m, stage, idx) {
   const seedings = {
     qf:["A1 vs D2","B1 vs C2","C1 vs B2","D1 vs A2"],
     sf:["QF1W vs QF2W","QF3W vs QF4W"],
+    third:["SF1L vs SF2L"],
     final:["SF1W vs SF2W"],
   };
 
@@ -261,7 +263,7 @@ function koCardHTML(m, stage, idx) {
   }
 
   return `
-  <div class="ko-card ${isFinal?"final-card":""}">
+  <div class="ko-card ${isFinal?"final-card":""} ${isThird?"third-card":""}">
     <div class="ko-label">
       <span>${labels[stage]}</span>
       ${tbd?`<span style="color:#5A7A5E;font-size:.65rem">(${seedings[stage][idx]})</span>`:""}
@@ -286,9 +288,34 @@ function renderTournament() {
   const poolsDone  = totalPool>0 && donePool===totalPool;
   const pct        = totalPool ? Math.round(donePool/totalPool*100) : 0;
 
-  const champion = pools?.koMatches?.final?.[0]?.status==="done"
-    ? (pools.koMatches.final[0].s1>pools.koMatches.final[0].s2
-      ? pools.koMatches.final[0].t1 : pools.koMatches.final[0].t2) : null;
+  const finalM = pools?.koMatches?.final?.[0];
+  const champion = finalM?.status==="done"
+    ? (finalM.s1>finalM.s2 ? finalM.t1 : finalM.t2) : null;
+  // Podium: gold = final winner, silver = final loser, bronze = 3rd-place winner
+  const silver = finalM?.status==="done"
+    ? (finalM.s1>finalM.s2 ? finalM.t2 : finalM.t1) : null;
+  // The 3rd-place match is the two semi-final losers; derive a fallback if the
+  // saved bracket predates the third-place feature so it still renders/scores.
+  const sfDone = (pools?.koMatches?.sf||[]).filter(m=>m.status==="done");
+  let thirdM = pools?.koMatches?.third?.[0];
+  if ((!thirdM || (!thirdM.t1 && !thirdM.t2)) && sfDone.length===2) {
+    const l = sfDone.map(m=>m.s1>m.s2?m.t2:m.t1);
+    thirdM = { id:"third", t1:l[0], t2:l[1], s1:thirdM?.s1??null, s2:thirdM?.s2??null,
+               status: thirdM?.status||"pending" };
+  }
+  const bronze = thirdM?.status==="done"
+    ? (thirdM.s1>thirdM.s2 ? thirdM.t1 : thirdM.t2) : null;
+
+  // Map a team name to its two player names (male, female) for the podium.
+  const playersByTeam = {};
+  if (pools?.teams) {
+    pools.teams.forEach((poolTeams, pi) => {
+      poolTeams.forEach((teamName, ti) => {
+        const players = (state.teamsData[pi]?.[ti]?.players || []).filter(Boolean);
+        if (teamName) playersByTeam[teamName] = players;
+      });
+    });
+  }
 
   const fbBadge = !isConfigured
     ? `<div class="fb-warning">(!) Firebase not connected - not syncing</div>`
@@ -467,16 +494,31 @@ function renderTournament() {
           <div class="ko-grid ko-grid-1">${finSkel}</div>
         </div>`;
     } else {
+      // Full podium once we have a champion; otherwise keep the simple banner.
+      const podiumStep = (place, medal, label, name, cls) => {
+        const players = name ? (playersByTeam[name]||[]) : [];
+        const playersHTML = players.length
+          ? `<div class="podium-players">${players.map(p=>esc(p)).join(" &bull; ")}</div>` : "";
+        return `
+        <div class="podium-step podium-${cls}">
+          <div class="podium-medal">${medal}</div>
+          <div class="podium-place">${label}</div>
+          <div class="podium-name">${name?esc(name):"&mdash;"}</div>
+          ${playersHTML}
+          <div class="podium-bar">${place}</div>
+        </div>`;
+      };
       const champBanner = champion ? `
-        <div class="champion-banner">
-          <div class="champion-icon">&#127942;</div>
-          <div class="champion-label">Tournament Champion</div>
-          <div class="champion-name">${esc(champion)}</div>
+        <div class="podium">
+          ${podiumStep(2,"&#129352;","Runner-up",silver,"silver")}
+          ${podiumStep(1,"&#129351;","Champion",champion,"gold")}
+          ${podiumStep(3,"&#129353;","3rd Place",bronze,"bronze")}
         </div>` : "";
 
       const qfCards   = pools.koMatches.qf.map((m,i)=>koCardHTML(m,"qf",i)).join("");
       const sfCards   = pools.koMatches.sf.map((m,i)=>koCardHTML(m,"sf",i)).join("");
       const finalCard = pools.koMatches.final.map((m,i)=>koCardHTML(m,"final",i)).join("");
+      const thirdCard = thirdM ? koCardHTML(thirdM,"third",0) : "";
 
       const koFormatBanner = `
         <div class="format-banner format-banner-ko">
@@ -502,8 +544,8 @@ function renderTournament() {
           <div class="ko-grid ko-grid-2">${sfCards}</div>
         </div>
         <div class="ko-section">
-          <div class="ko-title">Final &#127942; <div class="ko-title-bar"></div></div>
-          <div class="ko-grid ko-grid-1">${finalCard}</div>
+          <div class="ko-title">Final &#127942; &amp; 3rd Place &#129353; <div class="ko-title-bar"></div></div>
+          <div class="ko-grid ko-grid-2">${finalCard}${thirdCard}</div>
         </div>`;
     }
   }
