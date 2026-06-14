@@ -510,6 +510,12 @@ function renderTournament() {
           <div class="podium-bar">${place}</div>
         </div>`;
       };
+      // Photo under each podium column (file optional — hides itself if absent)
+      const podiumPhoto = (file, name, cls) => `
+        <div class="podium-photo podium-photo-${cls}">
+          <img src="images/${file}" alt="${name?esc(name):''}"
+            onerror="this.closest('.podium-photo').remove()"/>
+        </div>`;
       const champBanner = champion ? `
         <div class="winners-photo-wrap">
           <img src="images/winners.jpg" class="winners-photo" alt="CSBV 5.5 Champions"
@@ -520,6 +526,11 @@ function renderTournament() {
           ${podiumStep(2,"&#129352;","Runner-up",silver,"silver")}
           ${podiumStep(1,"&#129351;","Champion",champion,"gold")}
           ${podiumStep(3,"&#129353;","3rd Place",bronze,"bronze")}
+        </div>
+        <div class="podium-photos">
+          ${podiumPhoto("runnerup.jpg",silver,"silver")}
+          ${podiumPhoto("champion.jpg",champion,"gold")}
+          ${podiumPhoto("third.jpg",bronze,"bronze")}
         </div>` : "";
 
       const qfCards   = pools.koMatches.qf.map((m,i)=>koCardHTML(m,"qf",i)).join("");
