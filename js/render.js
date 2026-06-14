@@ -228,12 +228,12 @@ function koCardHTML(m, stage, idx) {
     final:["SF1W vs SF2W"],
   };
 
-  const teamRow = (name, won, lost)=>`
+  const teamRow = (name, won, lost, score)=>`
     <div class="ko-match-row">
       <span class="ko-team ${!name?"tbd":won?"won":lost?"lost":""}">
         ${esc(name)||"TBD"}${won?` <span style="margin-left:6px;font-size:.7rem">&#128081;</span>`:""}
       </span>
-      ${m.status==="done"?`<span class="ko-score" style="color:${won?"#C8F04A":"#5A7A5E"}">${won?m.s1:m.s2}</span>`:""}
+      ${m.status==="done"?`<span class="ko-score" style="color:${won?"#C8F04A":"#5A7A5E"}">${score}</span>`:""}
     </div>`;
 
   let actionHTML;
@@ -268,8 +268,8 @@ function koCardHTML(m, stage, idx) {
       <span>${labels[stage]}</span>
       ${tbd?`<span style="color:#5A7A5E;font-size:.65rem">(${seedings[stage][idx]})</span>`:""}
     </div>
-    ${teamRow(m.t1,w1,w2)}
-    ${teamRow(m.t2,w2,w1)}
+    ${teamRow(m.t1,w1,w2,m.s1)}
+    ${teamRow(m.t2,w2,w1,m.s2)}
     ${actionHTML}
   </div>`;
 }
