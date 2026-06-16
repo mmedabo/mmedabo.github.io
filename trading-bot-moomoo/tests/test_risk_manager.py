@@ -147,3 +147,115 @@ def test_summary_returns_rounded_pnl():
     r.record_close("X", 1.123456789)
     pnl = r.summary()["daily_pnl"]
     assert pnl == round(pnl, 2)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Per-symbol blacklist
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _cfg_with(**overrides):
+    return {**CFG, **overrides}
+
+
+def test_symbol_not_blacklisted_below_stop_threshold():
+    r = RiskManager(_cfg_with(max_stops_per_symbol=2))
+    r.record_close("X", -10.0)   # 1 loss — below threshold of 2
+    assert not r.is_symbol_blacklisted("X")
+
+
+def test_symbol_blacklisted_after_n_stops():
+    r = RiskManager(_cfg_with(max_stops_per_symbol=2))
+    r.record_close("X", -10.0)
+    r.record_close("X", -10.0)   # 2nd loss → blacklisted
+    assert r.is_symbol_blacklisted("X")
+
+
+def test_blacklist_only_affects_losing_symbol():
+    r = RiskManager(_cfg_with(max_stops_per_symbol=2))
+    r.record_close("X", -10.0)
+    r.record_close("X", -10.0)
+    assert r.is_symbol_blacklisted("X")
+    assert not r.is_symbol_blacklisted("Y")   # different symbol unaffected
+
+
+def test_blacklist_disabled_when_max_stops_is_zero():
+    r = RiskManager(_cfg_with(max_stops_per_symbol=0))
+    for _ in range(10):
+        r.record_close("X", -10.0)
+    assert not r.is_symbol_blacklisted("X")
+
+
+def test_win_does_not_count_toward_blacklist():
+    r = RiskManager(_cfg_with(max_stops_per_symbol=2))
+    r.record_close("X", +5.0)    # win
+    r.record_close("X", -10.0)   # 1 loss
+    assert not r.is_symbol_blacklisted("X")
+
+
+def test_blacklist_in_summary():
+    r = RiskManager(_cfg_with(max_stops_per_symbol=1))
+    r.record_close("A", -5.0)
+    assert "A" in r.summary()["blacklisted"]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Consecutive-loss stepdown
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_size_factor_is_1_with_no_config():
+    r = rm()   # no stepdown_after_losses in CFG
+    assert r.position_size_factor() == 1.0
+
+
+def test_size_factor_is_1_below_threshold():
+    r = RiskManager(_cfg_with(stepdown_after_losses=3, stepdown_factor=0.5))
+    r.record_close("X", -1.0)
+    r.record_close("X", -1.0)   # 2 losses, threshold is 3
+    assert r.position_size_factor() == 1.0
+
+
+def test_size_factor_steps_down_at_threshold():
+    r = RiskManager(_cfg_with(stepdown_after_losses=2, stepdown_factor=0.5))
+    r.record_close("X", -1.0)
+    r.record_close("X", -1.0)   # 2nd consecutive loss → stepdown
+    assert r.position_size_factor() == pytest.approx(0.5)
+
+
+def test_size_factor_stays_down_beyond_threshold():
+    r = RiskManager(_cfg_with(stepdown_after_losses=2, stepdown_factor=0.5))
+    for _ in range(5):
+        r.record_close("X", -1.0)
+    assert r.position_size_factor() == pytest.approx(0.5)
+
+
+def test_win_resets_consecutive_loss_counter():
+    r = RiskManager(_cfg_with(stepdown_after_losses=2, stepdown_factor=0.5))
+    r.record_close("X", -1.0)
+    r.record_close("X", -1.0)   # stepdown triggered
+    assert r.position_size_factor() == pytest.approx(0.5)
+    r.record_close("X", +5.0)   # win — reset
+    assert r.summary()["consec_losses"] == 0
+    assert r.position_size_factor() == 1.0
+
+
+def test_stepdown_disabled_when_config_zero():
+    r = RiskManager(_cfg_with(stepdown_after_losses=0, stepdown_factor=0.5))
+    for _ in range(10):
+        r.record_close("X", -10.0)
+    assert r.position_size_factor() == 1.0
+
+
+def test_consecutive_losses_tracked_across_symbols():
+    r = RiskManager(_cfg_with(stepdown_after_losses=2, stepdown_factor=0.5))
+    r.record_close("A", -1.0)
+    r.record_close("B", -1.0)   # losses on different symbols both count
+    assert r.position_size_factor() == pytest.approx(0.5)
+
+
+def test_size_factor_in_summary():
+    r = RiskManager(_cfg_with(stepdown_after_losses=2, stepdown_factor=0.5))
+    r.record_close("X", -1.0)
+    r.record_close("X", -1.0)
+    s = r.summary()
+    assert s["size_factor"] == pytest.approx(0.5)
+    assert s["consec_losses"] == 2

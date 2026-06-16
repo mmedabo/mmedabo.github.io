@@ -22,6 +22,9 @@ strategy:
   min_atr_ticks: 2         # skip entry if recent price range < N ticks (too flat)
   max_atr_ticks: 12        # skip entry if recent price range > N ticks (too volatile)
   warmup_minutes: 15       # skip entries in first 15 min of each session
+  # --- market trend filter ---
+  trend_threshold_pct: 0.75  # skip BUY if <25% of symbols rising; skip SELL if >75% rising
+  trend_min_symbols: 3       # need at least N symbols tracked before trend filter applies
 
 risk:
   total_capital_sgd: 1000   # total daily capital funded into the broker account
@@ -32,6 +35,10 @@ risk:
   max_trades_per_day: 30    # ~10 full cycles × 3 concurrent positions
   commission_rate: 0.0003   # 0.03% — Moomoo SG commission
   min_commission_sgd: 0.99  # Moomoo SG min per trade
+  # --- adaptive loss response ---
+  max_stops_per_symbol: 2   # blacklist symbol for rest of day after N losses on it
+  stepdown_after_losses: 2  # step down position size after N consecutive losses (any symbol)
+  stepdown_factor: 0.5      # position size multiplier during step-down (0.5 = half size)
 
 # Curated low-value SGX watchlist — all priced under S$3, liquid (≥1M vol/day).
 # The screener ranks these each morning by liquidity/spread and picks the best.

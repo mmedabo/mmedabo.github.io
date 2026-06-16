@@ -67,7 +67,8 @@ class Scalper:
         self._broker = broker
         self._history: dict[str, deque[Quote]] = {}
         self._open: dict[str, OpenTrade] = {}
-        self._cooldown_until: dict[str, float] = {}   # symbol → epoch when cooldown expires
+        self._cooldown_until: dict[str, float] = {}    # symbol → epoch when cooldown expires
+        self._market_momentums: dict[str, float] = {}  # symbol → latest momentum in ticks
         window = cfg["momentum_period"] + 2
         for sym in cfg.get("watchlist", []):
             self._history[sym] = deque(maxlen=window)
@@ -80,6 +81,12 @@ class Scalper:
             q.symbol, deque(maxlen=self._cfg["momentum_period"] + 2)
         )
         hist.append(q)
+
+        # keep market-wide momentum view current regardless of trade state
+        if len(hist) >= self._cfg["momentum_period"]:
+            tick = tick_size(q.last)
+            mom  = round(hist[-1].mid - hist[0].mid, 6)
+            self._market_momentums[q.symbol] = mom / tick if tick > 0 else 0.0
 
         if q.symbol in self._open:
             self._manage(q)
@@ -97,6 +104,11 @@ class Scalper:
         # --- guard 2: per-symbol cooldown after recent exit ---
         if _time.time() < self._cooldown_until.get(q.symbol, 0):
             log.debug("%s: cooldown active — skipping entry", q.symbol)
+            return
+
+        # --- guard 3: per-symbol daily blacklist (too many losses on this stock today) ---
+        if self._risk.is_symbol_blacklisted(q.symbol):
+            log.debug("%s: blacklisted for today — skipping entry", q.symbol)
             return
 
         tick = tick_size(q.last)
@@ -142,11 +154,29 @@ class Scalper:
             stop_price   = round(entry + tick * stop_ticks,   4)
             expected_gross = round((entry - target_price) * 1, 6)  # per share, profit = price falls
 
-        # Position sizing: as many board lots (100 shares) as MaxPositionSGD allows
-        max_sgd = self._cfg["max_position_sgd"]
+        # --- guard 5: market trend filter — skip counter-trend entries ---
+        trend_threshold = self._cfg.get("trend_threshold_pct", 0)
+        trend_min_syms  = self._cfg.get("trend_min_symbols", 3)
+        if trend_threshold > 0 and len(self._market_momentums) >= trend_min_syms:
+            total    = len(self._market_momentums)
+            up_count = sum(1 for m in self._market_momentums.values() if m > 0)
+            up_ratio = up_count / total
+            if side == "BUY" and up_ratio < (1.0 - trend_threshold):
+                log.debug("%s: market trending DOWN (%.0f%% up) — skip BUY",
+                          q.symbol, up_ratio * 100)
+                return
+            if side == "SELL" and up_ratio > trend_threshold:
+                log.debug("%s: market trending UP (%.0f%% up) — skip SELL",
+                          q.symbol, up_ratio * 100)
+                return
+
+        # Position sizing: apply stepdown factor when on a losing streak
+        factor  = self._risk.position_size_factor()
+        max_sgd = self._cfg["max_position_sgd"] * factor
         qty = int((max_sgd / entry) // 100) * 100
         if qty < 100:
-            log.debug("%s: price S$%.4f too high for board lot at S$%s limit", q.symbol, entry, max_sgd)
+            log.debug("%s: price S$%.4f too high for board lot at S$%.0f (factor=%.0f%%)",
+                      q.symbol, entry, max_sgd, factor * 100)
             return
 
         trade_val = entry * qty

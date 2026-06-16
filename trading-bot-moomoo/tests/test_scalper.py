@@ -640,3 +640,248 @@ def test_warmup_disabled_when_minutes_is_zero(monkeypatch):
         s.on_quote(q(bid, ask))
 
     assert "Y92.SI" in s.open_symbols, "with warmup_minutes=0, entry must not be blocked"
+
+
+# ----------------------------------------------------------------------- #
+# 12. PER-SYMBOL BLACKLIST (integration: scalper + risk manager)
+# ----------------------------------------------------------------------- #
+
+def _stop_out(s, b, sym="Y92.SI"):
+    """Helper: feed an up-trend entry then fire a stop-loss. Returns entry price."""
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask, sym=sym))
+    entry = next(o["price"] for o in reversed(b.orders) if o["side"] == "BUY")
+    stop  = round(entry - 3 * 0.005, 4)
+    s.on_quote(q(stop, round(stop + 0.010, 4), sym=sym))
+    assert sym not in s.open_symbols
+    return entry
+
+
+def test_blacklist_blocks_entry_after_n_stops():
+    """After max_stops_per_symbol losses on one ticker, it is barred for the day."""
+    risk_cfg  = {**BASE_RISK_CFG, "max_stops_per_symbol": 2,
+                 "max_daily_loss_sgd": 500}
+    strat_cfg = {**BASE_STRAT_CFG, "cooldown_seconds": 0}
+    s, r, b = make_scalper(risk_cfg=risk_cfg, strat_cfg=strat_cfg)
+
+    # First stop
+    s._history["Y92.SI"].clear()
+    _stop_out(s, b)
+    assert not r.is_symbol_blacklisted("Y92.SI")   # 1 loss — not yet blacklisted
+
+    # Second stop → blacklist triggers
+    s._history["Y92.SI"].clear()
+    _stop_out(s, b)
+    assert r.is_symbol_blacklisted("Y92.SI")
+
+    # Try to enter again — should be blocked
+    orders_before = len(b.orders)
+    s._history["Y92.SI"].clear()
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+    assert s.open_symbols == [], "blacklisted symbol must not be entered"
+    assert len(b.orders) == orders_before, "no new orders after blacklist"
+
+
+def test_blacklist_does_not_block_other_symbols():
+    """Blacklisting Y92 must not prevent entries on Z74."""
+    risk_cfg  = {**BASE_RISK_CFG, "max_stops_per_symbol": 1,
+                 "max_daily_loss_sgd": 500, "max_open_positions": 2}
+    strat_cfg = {**BASE_STRAT_CFG, "cooldown_seconds": 0,
+                 "watchlist": ["Y92.SI", "Z74.SI"]}
+    s, r, b = make_scalper(risk_cfg=risk_cfg, strat_cfg=strat_cfg)
+
+    _stop_out(s, b)                          # Y92 blacklisted after 1 stop
+    assert r.is_symbol_blacklisted("Y92.SI")
+
+    # Z74 (tick 0.01, spread 0.02 = 2 ticks) should still enter
+    for bid, ask in [(2.330, 2.350), (2.340, 2.360), (2.350, 2.370), (2.360, 2.380)]:
+        s.on_quote(q(bid, ask, sym="Z74.SI"))
+    assert "Z74.SI" in s.open_symbols, "different symbol must not be blocked"
+
+
+# ----------------------------------------------------------------------- #
+# 13. POSITION SIZE STEP-DOWN
+# ----------------------------------------------------------------------- #
+
+def test_stepdown_reduces_position_qty():
+    """After N consecutive losses, the next entry uses half the position size."""
+    risk_cfg  = {**BASE_RISK_CFG, "stepdown_after_losses": 2,
+                 "stepdown_factor": 0.5, "max_daily_loss_sgd": 500}
+    strat_cfg = {**BASE_STRAT_CFG, "cooldown_seconds": 0}
+    s, r, b = make_scalper(risk_cfg=risk_cfg, strat_cfg=strat_cfg)
+
+    # First entry — record normal qty
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+    normal_qty = next(o["qty"] for o in b.orders if o["side"] == "BUY")
+
+    # Stop 1
+    entry = next(o["price"] for o in b.orders if o["side"] == "BUY")
+    s.on_quote(q(round(entry - 3 * 0.005, 4), round(entry - 2 * 0.005, 4)))
+
+    # Second entry + stop (consecutive_losses = 2 → stepdown triggered)
+    s._history["Y92.SI"].clear()
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+    entry2 = next(o["price"] for o in reversed(b.orders) if o["side"] == "BUY")
+    s.on_quote(q(round(entry2 - 3 * 0.005, 4), round(entry2 - 2 * 0.005, 4)))
+
+    assert r.summary()["consec_losses"] == 2
+    assert r.position_size_factor() == pytest.approx(0.5)
+
+    # Third entry — should use stepdown size
+    s._history["Y92.SI"].clear()
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    if "Y92.SI" in s.open_symbols:
+        stepdown_qty = next(o["qty"] for o in reversed(b.orders) if o["side"] == "BUY")
+        assert stepdown_qty < normal_qty, \
+            f"step-down qty {stepdown_qty} should be < normal {normal_qty}"
+
+
+def test_win_restores_full_position_size():
+    """A winning trade resets the consecutive loss counter and restores full size."""
+    risk_cfg  = {**BASE_RISK_CFG, "stepdown_after_losses": 2, "stepdown_factor": 0.5}
+    strat_cfg = {**BASE_STRAT_CFG, "cooldown_seconds": 0}
+    s, r, b = make_scalper(risk_cfg=risk_cfg, strat_cfg=strat_cfg)
+
+    # Two stops → stepdown
+    for _ in range(2):
+        s._history["Y92.SI"].clear()
+        _stop_out(s, b)
+
+    assert r.position_size_factor() == pytest.approx(0.5)
+
+    # One win → resets
+    s._history["Y92.SI"].clear()
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+    if "Y92.SI" in s.open_symbols:
+        entry = next(o["price"] for o in reversed(b.orders) if o["side"] == "BUY")
+        target = round(entry + 1 * 0.005, 4)   # target_profit_ticks=1
+        s.on_quote(q(target, round(target + 0.010, 4)))
+
+    assert r.summary()["consec_losses"] == 0
+    assert r.position_size_factor() == 1.0
+
+
+def test_stepdown_disabled_when_config_zero():
+    """stepdown_after_losses=0 means position size is always 100%."""
+    risk_cfg  = {**BASE_RISK_CFG, "stepdown_after_losses": 0}
+    strat_cfg = {**BASE_STRAT_CFG, "cooldown_seconds": 0}
+    s, r, b = make_scalper(risk_cfg=risk_cfg, strat_cfg=strat_cfg)
+
+    for _ in range(5):
+        s._history["Y92.SI"].clear()
+        _stop_out(s, b)
+
+    assert r.position_size_factor() == 1.0
+
+
+# ----------------------------------------------------------------------- #
+# 14. MARKET TREND FILTER
+# ----------------------------------------------------------------------- #
+
+def test_market_trend_blocks_buy_in_falling_market():
+    """BUY entry is skipped when most tracked symbols are falling."""
+    strat_cfg = {**BASE_STRAT_CFG,
+                 "trend_threshold_pct": 0.75, "trend_min_symbols": 3}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    # Pre-load market view: 5 symbols all falling strongly
+    for sym in ["A.SI", "B.SI", "C.SI", "D.SI", "E.SI"]:
+        s._market_momentums[sym] = -3.0   # 3 ticks down
+
+    # Feed Y92 with rising momentum — would normally BUY
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    # After on_quote, Y92 also in _market_momentums (positive), so 1/6 = 17% up < 25%
+    assert s.open_symbols == [], "BUY blocked when market is predominantly falling"
+
+
+def test_market_trend_blocks_sell_in_rising_market():
+    """SELL entry is skipped when most tracked symbols are rising."""
+    strat_cfg = {**BASE_STRAT_CFG,
+                 "trend_threshold_pct": 0.75, "trend_min_symbols": 3}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    # Pre-load: 5 symbols all rising
+    for sym in ["A.SI", "B.SI", "C.SI", "D.SI", "E.SI"]:
+        s._market_momentums[sym] = +3.0
+
+    # Feed Y92 with falling momentum (down-trend → would try SELL)
+    for bid, ask in [(1.510, 1.520), (1.505, 1.515), (1.500, 1.510)]:
+        s.on_quote(q(bid, ask))
+
+    # Y92 momentum is negative → SELL signal, but 5/6 = 83% rising > 75% → skip SELL
+    assert s.open_symbols == [], "SELL blocked when market is predominantly rising"
+
+
+def test_market_trend_allows_buy_in_rising_market():
+    """BUY entry is allowed when most symbols are rising (aligned with trend)."""
+    strat_cfg = {**BASE_STRAT_CFG,
+                 "trend_threshold_pct": 0.75, "trend_min_symbols": 3}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    # Pre-load: 5 symbols all rising
+    for sym in ["A.SI", "B.SI", "C.SI", "D.SI", "E.SI"]:
+        s._market_momentums[sym] = +3.0
+
+    # Feed Y92 with rising momentum → BUY
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    # 6/6 = 100% rising → BUY allowed
+    assert "Y92.SI" in s.open_symbols, "BUY should proceed when market is rising"
+
+
+def test_market_trend_not_applied_below_min_symbols():
+    """Trend filter is inactive when fewer than trend_min_symbols are tracked."""
+    strat_cfg = {**BASE_STRAT_CFG,
+                 "trend_threshold_pct": 0.75, "trend_min_symbols": 8}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    # Only 3 falling symbols in market view — after Y92 feeds, still only 4 < 8
+    for sym in ["A.SI", "B.SI", "C.SI"]:
+        s._market_momentums[sym] = -5.0
+
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    # 4 symbols tracked < min_symbols=8 → filter not applied → BUY proceeds
+    assert "Y92.SI" in s.open_symbols, "trend filter must not apply below min_symbols"
+
+
+def test_market_trend_disabled_when_threshold_zero():
+    """trend_threshold_pct=0 disables the filter entirely."""
+    strat_cfg = {**BASE_STRAT_CFG, "trend_threshold_pct": 0}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    # Strongly falling market
+    for sym in ["A.SI", "B.SI", "C.SI", "D.SI", "E.SI"]:
+        s._market_momentums[sym] = -5.0
+
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    # Threshold=0 → no filter → BUY proceeds despite falling market
+    assert "Y92.SI" in s.open_symbols, "trend filter disabled when threshold_pct=0"
+
+
+def test_market_momentums_updated_for_all_symbols():
+    """_market_momentums tracks every polled symbol, including those already in a trade."""
+    strat_cfg = {**BASE_STRAT_CFG}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    # Open a position
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+    assert "Y92.SI" in s.open_symbols
+
+    # Feed another tick while in trade — market_momentums should still update
+    s.on_quote(q(1.510, 1.520))
+    assert "Y92.SI" in s._market_momentums, \
+        "momentum tracked even while position is open"
