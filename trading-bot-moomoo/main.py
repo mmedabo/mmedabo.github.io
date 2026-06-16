@@ -17,6 +17,7 @@ import yaml
 
 from broker.moomoo_broker import MoomooBroker
 from broker.paper_broker import PaperBroker
+from market.screener import screen
 from market.session import is_market_open, seconds_until_open
 from risk.manager import RiskManager
 from strategy.scalper import Quote, Scalper
@@ -44,6 +45,9 @@ def main():
     cfg = load_config(args.config)
 
     # broker selection
+    risk_cfg     = cfg["risk"]
+    capital      = risk_cfg.get("max_position_sgd", 1_000)
+
     if args.live:
         opend = cfg["opend"]
         broker = MoomooBroker(
@@ -53,6 +57,7 @@ def main():
         )
         broker.connect()
         log.warning("=== LIVE TRADING MODE — REAL MONEY AT RISK ===")
+        log.warning("=== Capital limit: S$%d ===", capital)
     elif cfg["opend"].get("trade_env", "SIMULATE").upper() == "SIMULATE" and not args.live:
         if cfg["opend"].get("use_opend_simulate", False):
             broker = MoomooBroker(
@@ -63,22 +68,35 @@ def main():
             broker.connect()
             log.info("connected to Moomoo SIMULATE environment")
         else:
-            broker = PaperBroker(initial_cash=50_000.0)
-            log.info("running in local paper trading mode (no OpenD needed)")
+            broker = PaperBroker(
+                initial_cash=float(capital),
+                commission_rate=risk_cfg["commission_rate"],
+                min_commission=risk_cfg["min_commission_sgd"],
+            )
+            log.info("running in local paper trading mode (no OpenD needed) | capital=S$%d", capital)
     else:
-        broker = PaperBroker(initial_cash=50_000.0)
-        log.info("running in local paper trading mode")
+        broker = PaperBroker(
+            initial_cash=float(capital),
+            commission_rate=risk_cfg["commission_rate"],
+            min_commission=risk_cfg["min_commission_sgd"],
+        )
+        log.info("running in local paper trading mode | capital=S$%d", capital)
 
     strategy_cfg = cfg["strategy"]
-    strategy_cfg["watchlist"] = cfg["watchlist"]
+    # propagate risk settings used by screener and position sizing into strategy_cfg
+    strategy_cfg["max_position_sgd"] = capital
 
-    risk = RiskManager(cfg["risk"])
+    raw_watchlist: list[str] = cfg["watchlist"]
+
+    risk = RiskManager(risk_cfg)
     scalper = Scalper(cfg=strategy_cfg, risk=risk, broker=broker)
 
-    watchlist: list[str] = cfg["watchlist"]
     poll_interval: float = strategy_cfg.get("poll_interval_sec", 0.5)
     stats_interval: float = 300  # log stats every 5 minutes
-    last_stats = time.time()
+    last_stats   = time.time()
+    last_screen  = 0.0           # force screen on first open
+    screen_every = 1800.0        # re-run screener every 30 min
+    watchlist: list[str] = raw_watchlist  # active (screened) list
 
     # graceful shutdown
     shutdown = False
@@ -89,7 +107,8 @@ def main():
     signal.signal(signal.SIGINT,  _sig_handler)
     signal.signal(signal.SIGTERM, _sig_handler)
 
-    log.info("bot started | watchlist=%s | poll=%.1fs", watchlist, poll_interval)
+    log.info("bot started | capital=S$%d | raw_watchlist=%d symbols | poll=%.1fs",
+             capital, len(raw_watchlist), poll_interval)
 
     while not shutdown:
         if not is_market_open():
@@ -105,6 +124,23 @@ def main():
             else:
                 time.sleep(poll_interval)
                 continue
+
+        # run screener at market open and every 30 min to adapt to changing liquidity
+        now = time.time()
+        if now - last_screen >= screen_every:
+            screener_cfg = {
+                "max_price_sgd":    strategy_cfg.get("max_price_sgd", 3.00),
+                "min_volume":       strategy_cfg.get("min_volume", 1_000_000),
+                "max_position_sgd": capital,
+            }
+            watchlist = screen(broker, raw_watchlist, screener_cfg) or raw_watchlist
+            strategy_cfg["watchlist"] = watchlist
+            # rebuild scalper history for new watchlist symbols
+            for sym in watchlist:
+                scalper._history.setdefault(sym, __import__("collections").deque(
+                    maxlen=strategy_cfg["momentum_period"] + 2))
+            last_screen = now
+            log.info("screener selected %d symbols: %s", len(watchlist), watchlist)
 
         # poll all symbols
         for sym in watchlist:

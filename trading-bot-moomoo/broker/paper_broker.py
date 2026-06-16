@@ -10,9 +10,23 @@ import threading
 log = logging.getLogger("broker.paper")
 
 _BASE_PRICES: dict[str, float] = {
-    "D05.SI": 36.50,  "O39.SI": 14.80,  "U11.SI": 32.20,
-    "Z74.SI":  2.35,  "F34.SI":  3.18,  "BN4.SI":  6.75,
-    "C6L.SI":  6.40,  "V03.SI": 14.10,  "Y92.SI":  0.59,
+    # Low-value SGX stocks targeted by the S$1,000-capital screener
+    "Y92.SI":  0.57,   # Thai Beverage
+    "E5H.SI":  0.23,   # Golden Agri-Resources
+    "G13.SI":  0.92,   # Genting Singapore
+    "C52.SI":  1.55,   # ComfortDelGro
+    "T82U.SI": 1.35,   # Mapletree Logistics Trust
+    "J91U.SI": 0.35,   # ESR-REIT
+    "P8Z.SI":  0.58,   # Bumitama Agri
+    "QES.SI":  0.36,   # China Sunsine Chemical
+    "5CP.SI":  0.32,   # Silverlake Axis
+    "EB5.SI":  1.20,   # Frasers Logistics
+    "A17U.SI": 2.80,   # Ascendas REIT
+    "C38U.SI": 2.00,   # CapitaLand Integrated CT
+    "S51.SI":  2.90,   # SATS
+    "OYY.SI":  1.70,   # PropNex
+    # Legacy entries kept so existing tests that reference them still compile
+    "D05.SI": 36.50,   "O39.SI": 14.80,  "U11.SI": 32.20,
 }
 
 

@@ -1,4 +1,5 @@
 # Moomoo SGX Scalping Bot — configuration
+# Capital: S$1,000 per day. Target low-value SGX stocks (price ≤ S$3.00).
 # Start MoomooOpenD on your machine first, then run: python main.py
 
 opend:
@@ -11,25 +12,34 @@ strategy:
   target_profit_ticks: 4   # ticks of profit to exit at target
   stop_loss_ticks: 3       # ticks to cut loss
   max_hold_seconds: 120    # force-exit after N seconds
-  min_volume: 500000       # skip illiquid stocks
+  min_volume: 1000000      # require ≥1M daily volume for liquidity
   momentum_period: 5       # number of ticks to measure momentum
   poll_interval_sec: 0.5   # how often to poll quotes
+  max_price_sgd: 3.00      # screener: skip stocks above this price
 
 risk:
-  max_position_sgd: 10000    # max SGD per position
-  max_daily_loss_sgd: 300    # halt trading after this daily loss
-  max_open_positions: 3
-  max_trades_per_day: 50
-  commission_rate: 0.0003    # 0.03% — Moomoo SG commission
-  min_commission_sgd: 0.99   # Moomoo SG min per trade
+  max_position_sgd: 1000    # S$1,000 total capital per day
+  max_daily_loss_sgd: 80    # halt after losing 8% of capital (~4 bad stops)
+  max_open_positions: 1     # only one position at a time with S$1,000 capital
+  max_trades_per_day: 15    # ~15 cycles within a trading day
+  commission_rate: 0.0003   # 0.03% — Moomoo SG commission
+  min_commission_sgd: 0.99  # Moomoo SG min per trade
 
-# SGX symbols (Moomoo format, no .SI suffix needed — uses stock code directly)
+# Curated low-value SGX watchlist — all priced under S$3, liquid (≥1M vol/day).
+# The screener ranks these each morning by liquidity/spread and picks the best.
+# Tick size: ≤S$0.20 → 0.001  |  S$0.20–S$1.99 → 0.005  |  ≥S$2.00 → 0.010
 watchlist:
-  - "D05.SI"    # DBS Group Holdings
-  - "O39.SI"    # OCBC Bank
-  - "U11.SI"    # United Overseas Bank
-  - "Z74.SI"    # Singtel
-  - "C6L.SI"    # Singapore Airlines
-  - "BN4.SI"    # Keppel Corporation
-  - "V03.SI"    # Venture Corporation
-  - "Y92.SI"    # Thai Beverage
+  - "Y92.SI"    # Thai Beverage          ~S$0.57  (tick 0.005, high vol)
+  - "E5H.SI"    # Golden Agri-Resources  ~S$0.23  (tick 0.005, high vol)
+  - "G13.SI"    # Genting Singapore      ~S$0.92  (tick 0.005, high vol)
+  - "C52.SI"    # ComfortDelGro          ~S$1.55  (tick 0.005, good vol)
+  - "T82U.SI"   # Mapletree Logistics    ~S$1.35  (tick 0.005, REIT)
+  - "J91U.SI"   # ESR-REIT               ~S$0.35  (tick 0.005, high vol)
+  - "P8Z.SI"    # Bumitama Agri          ~S$0.58  (tick 0.005, agri)
+  - "QES.SI"    # China Sunsine Chemical ~S$0.36  (tick 0.005)
+  - "5CP.SI"    # Silverlake Axis        ~S$0.32  (tick 0.005, tech)
+  - "EB5.SI"    # Frasers Log & Ind      ~S$1.20  (tick 0.005, REIT)
+  - "A17U.SI"   # Ascendas REIT          ~S$2.80  (tick 0.010, large REIT)
+  - "C38U.SI"   # CapitaLand Integ CT    ~S$2.00  (tick 0.010, large REIT)
+  - "S51.SI"    # SATS                   ~S$2.90  (tick 0.010, aviation svc)
+  - "OYY.SI"    # PropNex                ~S$1.70  (tick 0.005, property)
