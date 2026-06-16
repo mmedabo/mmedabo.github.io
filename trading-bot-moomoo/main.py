@@ -15,7 +15,6 @@ import time
 
 import yaml
 
-from broker.moomoo_broker import MoomooBroker
 from broker.paper_broker import PaperBroker
 from market.screener import screen
 from market.session import is_market_open, seconds_until_open
@@ -50,6 +49,7 @@ def main():
     per_pos_sgd   = risk_cfg.get("max_position_sgd", 333)       # per-position limit
 
     if args.live:
+        from broker.moomoo_broker import MoomooBroker  # requires moomoo-api + OpenD
         opend = cfg["opend"]
         broker = MoomooBroker(
             host=opend["host"],
@@ -108,8 +108,8 @@ def main():
     signal.signal(signal.SIGINT,  _sig_handler)
     signal.signal(signal.SIGTERM, _sig_handler)
 
-    log.info("bot started | capital=S$%d | raw_watchlist=%d symbols | poll=%.1fs",
-             capital, len(raw_watchlist), poll_interval)
+    log.info("bot started | capital=S$%d  per_pos=S$%d | watchlist=%d symbols | poll=%.1fs",
+             total_capital, per_pos_sgd, len(raw_watchlist), poll_interval)
 
     while not shutdown:
         if not is_market_open():

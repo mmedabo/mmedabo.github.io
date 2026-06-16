@@ -1,3 +1,7 @@
-moomoo-api>=9.0.0
-pandas>=2.0.0
+# Core (paper trading — no OpenD required)
 pyyaml>=6.0
+pytz>=2024.1
+
+# Only needed for --live mode (requires Moomoo OpenD running locally)
+# moomoo-api>=9.0.0
+# pandas>=2.0.0
