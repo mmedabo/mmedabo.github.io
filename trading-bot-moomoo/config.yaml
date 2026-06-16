@@ -1,0 +1,35 @@
+# Moomoo SGX Scalping Bot — configuration
+# Start MoomooOpenD on your machine first, then run: python main.py
+
+opend:
+  host: "127.0.0.1"
+  port: 11111
+  trade_env: "SIMULATE"   # "SIMULATE" for paper trading, "REAL" for live
+
+strategy:
+  min_spread_ticks: 2      # minimum bid-ask spread in ticks to enter
+  target_profit_ticks: 4   # ticks of profit to exit at target
+  stop_loss_ticks: 3       # ticks to cut loss
+  max_hold_seconds: 120    # force-exit after N seconds
+  min_volume: 500000       # skip illiquid stocks
+  momentum_period: 5       # number of ticks to measure momentum
+  poll_interval_sec: 0.5   # how often to poll quotes
+
+risk:
+  max_position_sgd: 10000    # max SGD per position
+  max_daily_loss_sgd: 300    # halt trading after this daily loss
+  max_open_positions: 3
+  max_trades_per_day: 50
+  commission_rate: 0.0003    # 0.03% — Moomoo SG commission
+  min_commission_sgd: 0.99   # Moomoo SG min per trade
+
+# SGX symbols (Moomoo format, no .SI suffix needed — uses stock code directly)
+watchlist:
+  - "D05.SI"    # DBS Group Holdings
+  - "O39.SI"    # OCBC Bank
+  - "U11.SI"    # United Overseas Bank
+  - "Z74.SI"    # Singtel
+  - "C6L.SI"    # Singapore Airlines
+  - "BN4.SI"    # Keppel Corporation
+  - "V03.SI"    # Venture Corporation
+  - "Y92.SI"    # Thai Beverage
