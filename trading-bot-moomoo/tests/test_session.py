@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from datetime import datetime
 import pytz
 import pytest
-from market.session import is_market_open, seconds_until_open
+from market.session import is_market_open, is_warmup_period, seconds_until_open
 
 SGT = pytz.timezone("Asia/Singapore")
 
@@ -57,6 +57,50 @@ def test_closed_on_sunday():
 
 def test_open_friday_morning():
     assert is_market_open(sgt(4, 9, 30))   # Friday 09:30
+
+
+# --- is_warmup_period ---
+
+def test_warmup_at_exact_morning_open():
+    assert is_warmup_period(sgt(0, 9, 0))    # first tick of morning session
+
+
+def test_warmup_at_morning_open_mid():
+    assert is_warmup_period(sgt(0, 9, 7))    # 7 min in — still warmup
+
+
+def test_warmup_ends_at_915():
+    assert not is_warmup_period(sgt(0, 9, 15))   # 09:15 → warmup over
+
+
+def test_no_warmup_during_normal_trading():
+    assert not is_warmup_period(sgt(0, 10, 0))   # mid-morning
+    assert not is_warmup_period(sgt(0, 11, 0))   # late morning
+    assert not is_warmup_period(sgt(0, 14, 0))   # mid-afternoon
+
+
+def test_warmup_at_exact_afternoon_open():
+    assert is_warmup_period(sgt(0, 13, 5))    # first tick of afternoon session
+
+
+def test_warmup_during_afternoon_warmup():
+    assert is_warmup_period(sgt(0, 13, 12))   # 7 min after afternoon open
+
+
+def test_warmup_ends_at_1320():
+    assert not is_warmup_period(sgt(0, 13, 20))  # 13:20 → afternoon warmup over
+
+
+def test_no_warmup_on_weekend():
+    assert not is_warmup_period(sgt(5, 9, 0))    # Saturday — market closed
+
+
+def test_no_warmup_before_market_open():
+    assert not is_warmup_period(sgt(0, 8, 59))   # before open
+
+
+def test_no_warmup_after_market_close():
+    assert not is_warmup_period(sgt(0, 17, 0))   # after close
 
 
 # --- seconds_until_open ---

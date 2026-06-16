@@ -134,7 +134,10 @@ def main():
                 "min_volume":       strategy_cfg.get("min_volume", 1_000_000),
                 "max_position_sgd": per_pos_sgd,
             }
-            watchlist = screen(broker, raw_watchlist, screener_cfg) or raw_watchlist
+            screened = screen(broker, raw_watchlist, screener_cfg)
+            # Cap to best-N so weaker stocks never displace top-ranked ones
+            max_cands = strategy_cfg.get("max_candidates", len(raw_watchlist))
+            watchlist = (screened or raw_watchlist)[:max_cands]
             strategy_cfg["watchlist"] = watchlist
             # rebuild scalper history for new watchlist symbols
             for sym in watchlist:

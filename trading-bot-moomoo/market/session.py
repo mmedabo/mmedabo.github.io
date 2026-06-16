@@ -5,10 +5,12 @@ import pytz
 SGT = pytz.timezone("Asia/Singapore")
 
 # Continuous trading windows (SGX, excluding auctions and lunch break)
-_MORNING_OPEN  = time(9,  0)
-_MORNING_CLOSE = time(11, 50)   # stop 10 min before lunch
-_AFTERNOON_OPEN  = time(13, 5)  # 5 min after afternoon open
-_AFTERNOON_CLOSE = time(16, 50) # 10 min before closing auction
+_MORNING_OPEN    = time(9,  0)
+_MORNING_WARMUP  = time(9, 15)   # first 15 min: wide spreads, skip entries
+_MORNING_CLOSE   = time(11, 50)  # stop 10 min before lunch
+_AFTERNOON_OPEN  = time(13,  5)  # 5 min after afternoon open
+_AFTERNOON_WARMUP = time(13, 20) # first 15 min of afternoon: skip entries
+_AFTERNOON_CLOSE = time(16, 50)  # 10 min before closing auction
 
 
 def is_market_open(now: datetime | None = None) -> bool:
@@ -19,6 +21,18 @@ def is_market_open(now: datetime | None = None) -> bool:
     return (
         (_MORNING_OPEN <= t < _MORNING_CLOSE) or
         (_AFTERNOON_OPEN <= t < _AFTERNOON_CLOSE)
+    )
+
+
+def is_warmup_period(now: datetime | None = None) -> bool:
+    """True during the first 15 min of each session when spreads are typically wide."""
+    sgt = (now or datetime.now(SGT)).astimezone(SGT)
+    if sgt.weekday() >= 5:
+        return False
+    t = sgt.time()
+    return (
+        (_MORNING_OPEN   <= t < _MORNING_WARMUP) or
+        (_AFTERNOON_OPEN <= t < _AFTERNOON_WARMUP)
     )
 
 

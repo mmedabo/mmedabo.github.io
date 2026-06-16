@@ -16,6 +16,12 @@ strategy:
   momentum_period: 5       # number of ticks to measure momentum
   poll_interval_sec: 0.5   # how often to poll quotes
   max_price_sgd: 3.00      # screener: skip stocks above this price
+  # --- smarter selection ---
+  max_candidates: 6        # only trade top-N from screener (≈ max_open × 2); 0 = all
+  cooldown_seconds: 300    # seconds before re-entering same symbol after any exit
+  min_atr_ticks: 2         # skip entry if recent price range < N ticks (too flat)
+  max_atr_ticks: 12        # skip entry if recent price range > N ticks (too volatile)
+  warmup_minutes: 15       # skip entries in first 15 min of each session
 
 risk:
   total_capital_sgd: 1000   # total daily capital funded into the broker account

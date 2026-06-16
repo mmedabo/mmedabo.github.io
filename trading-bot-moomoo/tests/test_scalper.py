@@ -457,3 +457,186 @@ def test_two_symbols_trade_independently():
     assert len(open_syms) == 2, f"expected 2 open positions, got {open_syms}"
     assert "Y92.SI" in open_syms
     assert "Z74.SI" in open_syms
+
+
+# ----------------------------------------------------------------------- #
+# 9. COOLDOWN — min time between entries on same symbol
+# ----------------------------------------------------------------------- #
+
+def _enter_and_stop(s, b):
+    """Helper: enter a position then immediately trigger the stop-loss."""
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+    entry = b.orders[-1]["price"]
+    stop  = round(entry - 3 * 0.005, 4)
+    s.on_quote(q(stop, round(stop + 0.010, 4)))
+    assert s.open_symbols == [], "stop must fire before cooldown test begins"
+
+
+def test_cooldown_blocks_reentry_immediately_after_exit():
+    """Same symbol must not be entered again while cooldown is active."""
+    strat_cfg = {**BASE_STRAT_CFG, "cooldown_seconds": 9999}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    _enter_and_stop(s, b)
+    orders_after_exit = len(b.orders)
+
+    # Try re-entry: fresh momentum, same symbol
+    s._history["Y92.SI"].clear()
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    assert s.open_symbols == [], "cooldown should block re-entry"
+    assert len(b.orders) == orders_after_exit, "no new order should be placed during cooldown"
+
+
+def test_cooldown_allows_entry_after_expiry():
+    """Once cooldown expires, entry should succeed again."""
+    strat_cfg = {**BASE_STRAT_CFG, "cooldown_seconds": 9999}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    _enter_and_stop(s, b)
+
+    # Manually expire the cooldown
+    s._cooldown_until["Y92.SI"] = 0
+
+    s._history["Y92.SI"].clear()
+    orders_before = len(b.orders)
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    assert "Y92.SI" in s.open_symbols, "entry should succeed after cooldown expires"
+    assert len(b.orders) > orders_before, "new BUY order should be placed"
+
+
+def test_no_cooldown_when_seconds_is_zero():
+    """cooldown_seconds=0 (default) never blocks re-entry."""
+    strat_cfg = {**BASE_STRAT_CFG, "cooldown_seconds": 0}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    _enter_and_stop(s, b)
+
+    s._history["Y92.SI"].clear()
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    assert "Y92.SI" in s.open_symbols, "no cooldown set — re-entry must succeed"
+
+
+def test_cooldown_does_not_affect_different_symbol():
+    """Cooldown on Y92 must not block an entry on a different symbol."""
+    risk_cfg  = {**BASE_RISK_CFG, "max_open_positions": 2}
+    strat_cfg = {**BASE_STRAT_CFG, "cooldown_seconds": 9999,
+                 "watchlist": ["Y92.SI", "Z74.SI"]}
+    s, r, b = make_scalper(risk_cfg=risk_cfg, strat_cfg=strat_cfg)
+
+    _enter_and_stop(s, b)   # Y92 exits, cooldown set for Y92
+
+    # Z74 should still be allowed to enter
+    for bid, ask in [(2.330, 2.350), (2.340, 2.360), (2.350, 2.370), (2.360, 2.380)]:
+        s.on_quote(q(bid, ask, sym="Z74.SI"))
+
+    assert "Z74.SI" in s.open_symbols, "cooldown on Y92 must not block Z74 entry"
+
+
+# ----------------------------------------------------------------------- #
+# 10. ATR / VOLATILITY FILTER
+# ----------------------------------------------------------------------- #
+
+def test_no_entry_below_min_atr_ticks():
+    """Entry blocked when recent price range is less than min_atr_ticks (too flat)."""
+    # min_atr_ticks=6 requires ≥ 6 × 0.005 = 0.030 range; our sequence only spans 0.002
+    strat_cfg = {**BASE_STRAT_CFG, "min_atr_ticks": 6}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    # Clear uptrend but microscopic bid range (0.002 across 3 quotes)
+    for bid, ask in [(1.500, 1.510), (1.501, 1.511), (1.502, 1.512)]:
+        s.on_quote(q(bid, ask))
+
+    assert s.open_symbols == [], "too-flat price must be rejected by ATR min filter"
+
+
+def test_no_entry_above_max_atr_ticks():
+    """Entry blocked when recent price range exceeds max_atr_ticks (too volatile)."""
+    # max_atr_ticks=4 rejects range > 4 × 0.005 = 0.020; our sequence spans 0.060
+    strat_cfg = {**BASE_STRAT_CFG, "max_atr_ticks": 4}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    # Violent upward swing — clear trend but enormous range
+    for bid, ask in [(1.490, 1.500), (1.520, 1.530), (1.550, 1.560)]:
+        s.on_quote(q(bid, ask))
+
+    assert s.open_symbols == [], "too-volatile price must be rejected by ATR max filter"
+
+
+def test_entry_within_atr_bounds():
+    """Entry proceeds when range is within [min_atr_ticks, max_atr_ticks]."""
+    # range 0.010 = 2 ticks; min=2, max=8 → should pass
+    strat_cfg = {**BASE_STRAT_CFG, "min_atr_ticks": 2, "max_atr_ticks": 8}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    assert "Y92.SI" in s.open_symbols, "price within ATR bounds should enter"
+
+
+def test_no_atr_filter_when_both_zero():
+    """Both min and max set to 0 disables the filter entirely."""
+    strat_cfg = {**BASE_STRAT_CFG, "min_atr_ticks": 0, "max_atr_ticks": 0}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    assert "Y92.SI" in s.open_symbols, "ATR disabled — flat or volatile prices should not block"
+
+
+# ----------------------------------------------------------------------- #
+# 11. SESSION WARMUP FILTER
+# ----------------------------------------------------------------------- #
+
+def test_no_entry_during_warmup_period(monkeypatch):
+    """Entries are blocked during the first 15 min of each session when warmup_minutes > 0."""
+    strat_cfg = {**BASE_STRAT_CFG, "warmup_minutes": 15}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    monkeypatch.setattr("strategy.scalper.is_warmup_period", lambda: True)
+
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    assert s.open_symbols == [], "warmup period must block all entries"
+    assert b.orders == [], "no orders should be placed during warmup"
+
+
+def test_entry_allowed_outside_warmup(monkeypatch):
+    """Entries proceed normally when warmup period is over."""
+    strat_cfg = {**BASE_STRAT_CFG, "warmup_minutes": 15}
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+
+    monkeypatch.setattr("strategy.scalper.is_warmup_period", lambda: False)
+
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    assert "Y92.SI" in s.open_symbols, "entry should proceed once warmup is over"
+
+
+def test_warmup_disabled_when_minutes_is_zero(monkeypatch):
+    """warmup_minutes=0 (default) never calls is_warmup_period — even inside a warmup window."""
+    call_count = {"n": 0}
+    original = __import__("market.session", fromlist=["is_warmup_period"]).is_warmup_period
+
+    def counting_warmup():
+        call_count["n"] += 1
+        return True   # always returns True — would block if checked
+
+    strat_cfg = {**BASE_STRAT_CFG}   # no warmup_minutes key → defaults to 0
+    s, r, b = make_scalper(strat_cfg=strat_cfg)
+    monkeypatch.setattr("strategy.scalper.is_warmup_period", counting_warmup)
+
+    for bid, ask in [(1.490, 1.500), (1.495, 1.505), (1.500, 1.510), (1.505, 1.515)]:
+        s.on_quote(q(bid, ask))
+
+    assert "Y92.SI" in s.open_symbols, "with warmup_minutes=0, entry must not be blocked"

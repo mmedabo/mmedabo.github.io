@@ -15,6 +15,7 @@ import time as _time
 from collections import deque
 from dataclasses import dataclass, field
 
+from market.session import is_warmup_period
 from risk.manager import RiskManager
 
 log = logging.getLogger("scalper")
@@ -66,6 +67,7 @@ class Scalper:
         self._broker = broker
         self._history: dict[str, deque[Quote]] = {}
         self._open: dict[str, OpenTrade] = {}
+        self._cooldown_until: dict[str, float] = {}   # symbol → epoch when cooldown expires
         window = cfg["momentum_period"] + 2
         for sym in cfg.get("watchlist", []):
             self._history[sym] = deque(maxlen=window)
@@ -87,6 +89,16 @@ class Scalper:
     # ------------------------------------------------------------------ #
 
     def _try_enter(self, q: Quote, hist: deque[Quote]):
+        # --- guard 1: open-session warmup (wide spreads at session start) ---
+        if self._cfg.get("warmup_minutes", 0) > 0 and is_warmup_period():
+            log.debug("%s: session warmup — skipping entry", q.symbol)
+            return
+
+        # --- guard 2: per-symbol cooldown after recent exit ---
+        if _time.time() < self._cooldown_until.get(q.symbol, 0):
+            log.debug("%s: cooldown active — skipping entry", q.symbol)
+            return
+
         tick = tick_size(q.last)
         min_spread = round(tick * self._cfg["min_spread_ticks"], 4)
 
@@ -99,6 +111,19 @@ class Scalper:
         # use tolerance instead of exact zero — float mid arithmetic can produce tiny residuals
         if abs(momentum) < 1e-9:
             return
+
+        # --- guard 3: ATR / volatility filter ---
+        min_atr_ticks = self._cfg.get("min_atr_ticks", 0)
+        max_atr_ticks = self._cfg.get("max_atr_ticks", 0)
+        if min_atr_ticks > 0 or max_atr_ticks > 0:
+            bids = [h.bid for h in hist]
+            atr = round(max(bids) - min(bids), 6)
+            if min_atr_ticks > 0 and atr < tick * min_atr_ticks:
+                log.debug("%s: ATR %.4f < min %.4f — too flat", q.symbol, atr, tick * min_atr_ticks)
+                return
+            if max_atr_ticks > 0 and atr > tick * max_atr_ticks:
+                log.debug("%s: ATR %.4f > max %.4f — too volatile", q.symbol, atr, tick * max_atr_ticks)
+                return
 
         target_ticks = self._cfg["target_profit_ticks"]
         stop_ticks   = self._cfg["stop_loss_ticks"]
@@ -197,6 +222,11 @@ class Scalper:
 
         self._risk.record_close(trade.symbol, net_pnl)
         del self._open[trade.symbol]
+
+        cooldown = self._cfg.get("cooldown_seconds", 0)
+        if cooldown > 0:
+            self._cooldown_until[trade.symbol] = _time.time() + cooldown
+            log.debug("%s: cooldown set for %.0fs", trade.symbol, cooldown)
 
         log.info(
             "EXIT  %s | reason=%-8s entry=%.4f exit=%.4f gross=%+.3f comm=%.2f net=%+.3f SGD held=%.1fs",
