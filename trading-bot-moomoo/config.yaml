@@ -26,7 +26,8 @@ strategy:
 risk:
   total_capital_sgd: 1000   # total daily capital funded into the broker account
   max_position_sgd: 333     # max SGD per single position (total / max_open_positions)
-  max_daily_loss_sgd: 80    # halt after losing 8% of capital (~4 bad stops)
+  max_daily_loss_sgd: 80    # halt after losing 8% of capital (~4 bad stops) — resets each day
+  min_capital_sgd: 700      # HARD STOP: if broker cash drops below this, halt permanently
   max_open_positions: 3     # spread capital across up to 3 simultaneous positions
   max_trades_per_day: 30    # ~10 full cycles × 3 concurrent positions
   commission_rate: 0.0003   # 0.03% — Moomoo SG commission
