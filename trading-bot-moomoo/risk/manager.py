@@ -2,6 +2,7 @@
 from __future__ import annotations
 import logging
 import threading
+from collections import deque
 from datetime import date
 from dataclasses import dataclass
 
@@ -26,7 +27,7 @@ class RiskManager:
         self._daily_pnl: float = 0.0
         self._trade_count: int = 0
         self._open_count: int = 0
-        self._records: list[TradeRecord] = []
+        self._records: deque[TradeRecord] = deque(maxlen=500)
         # adaptive features — reset each calendar day
         self._symbol_stops: dict[str, int] = {}     # losses per symbol today
         self._symbol_blacklist: set[str] = set()    # symbols barred for rest of day

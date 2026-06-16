@@ -11,6 +11,7 @@ import argparse
 import logging
 import signal
 import time
+from collections import deque
 
 import yaml
 
@@ -29,8 +30,50 @@ log = logging.getLogger("main")
 
 
 def load_config(path: str) -> dict:
-    with open(path) as f:
-        return yaml.safe_load(f)
+    try:
+        with open(path) as f:
+            cfg = yaml.safe_load(f)
+    except FileNotFoundError:
+        raise SystemExit(f"Config file not found: {path}")
+    except yaml.YAMLError as e:
+        raise SystemExit(f"Invalid YAML in config: {e}")
+    if not isinstance(cfg, dict):
+        raise SystemExit(f"Config must be a YAML mapping: {path}")
+    return cfg
+
+
+def _validate_config(cfg: dict) -> None:
+    """Fail fast if required config values are missing or out of range."""
+    def _pos(section: str, key: str, val) -> None:
+        if not isinstance(val, (int, float)) or val <= 0:
+            raise SystemExit(
+                f"config[{section}][{key}] must be a positive number, got {val!r}"
+            )
+
+    risk  = cfg.get("risk", {})
+    strat = cfg.get("strategy", {})
+    opend = cfg.get("opend", {})
+
+    for k in ("total_capital_sgd", "max_position_sgd", "max_daily_loss_sgd",
+              "max_open_positions", "commission_rate", "min_commission_sgd"):
+        _pos("risk", k, risk.get(k))
+
+    for k in ("momentum_period", "min_spread_ticks", "target_profit_ticks",
+              "stop_loss_ticks", "max_hold_seconds"):
+        _pos("strategy", k, strat.get(k))
+
+    port = opend.get("port", 11111)
+    if not isinstance(port, int) or not (1 <= port <= 65535):
+        raise SystemExit(
+            f"config[opend][port] must be an integer 1–65535, got {port!r}"
+        )
+
+    host = opend.get("host", "127.0.0.1")
+    if host not in ("127.0.0.1", "localhost"):
+        log.warning(
+            "config[opend][host]=%r — OpenD is typically local-only; "
+            "connecting to a remote host is not recommended", host
+        )
 
 
 def main():
@@ -41,6 +84,7 @@ def main():
     args = parser.parse_args()
 
     cfg = load_config(args.config)
+    _validate_config(cfg)
 
     # ── broker selection ──────────────────────────────────────────────────
     risk_cfg      = cfg["risk"]
@@ -51,16 +95,22 @@ def main():
     if args.live:
         from broker.moomoo_broker import MoomooBroker  # requires moomoo-api + OpenD
         opend = cfg["opend"]
-        broker = MoomooBroker(host=opend["host"], port=opend["port"], trade_env="REAL")
-        broker.connect()
+        try:
+            broker = MoomooBroker(host=opend["host"], port=opend["port"], trade_env="REAL")
+            broker.connect()
+        except Exception as e:
+            raise SystemExit(f"Failed to connect to Moomoo OpenD (REAL): {e}")
         log.warning("=== LIVE TRADING MODE — REAL MONEY AT RISK ===")
         log.warning("=== Capital: S$%d total / S$%d per position ===", total_capital, per_pos_sgd)
     elif cfg["opend"].get("use_opend_simulate", False):
         from broker.moomoo_broker import MoomooBroker
-        broker = MoomooBroker(
-            host=cfg["opend"]["host"], port=cfg["opend"]["port"], trade_env="SIMULATE"
-        )
-        broker.connect()
+        try:
+            broker = MoomooBroker(
+                host=cfg["opend"]["host"], port=cfg["opend"]["port"], trade_env="SIMULATE"
+            )
+            broker.connect()
+        except Exception as e:
+            raise SystemExit(f"Failed to connect to Moomoo OpenD (SIMULATE): {e}")
         log.info("connected to Moomoo SIMULATE environment")
     else:
         broker = PaperBroker(
@@ -139,15 +189,14 @@ def main():
             max_cands = strategy_cfg.get("max_candidates", len(raw_watchlist))
             watchlist = (screened or raw_watchlist)[:max_cands]
             strategy_cfg["watchlist"] = watchlist
+            window = strategy_cfg["momentum_period"] + 2
             for sym in watchlist:
-                scalper._history.setdefault(
-                    sym, __import__("collections").deque(
-                        maxlen=strategy_cfg["momentum_period"] + 2))
+                scalper._history.setdefault(sym, deque(maxlen=window))
             last_screen = now
             log.info("screener selected %d symbols: %s", len(watchlist), watchlist)
 
-        # ── poll all symbols ──────────────────────────────────────────────
-        for sym in watchlist:
+        # ── poll all symbols (snapshot avoids mutation during iteration) ──
+        for sym in list(watchlist):
             if shutdown:
                 break
             raw = broker.get_quote(sym)
