@@ -1,23 +1,27 @@
 """
 SGX Micro-Profit Scalping Strategy
 ====================================
-Entry:  positive momentum (5-tick window) + spread ≥ 2 ticks + trade is profitable after commission
+Entry:  momentum over rolling window + spread ≥ N ticks + net PnL > 0 after commission
 Exit:   first of — target ticks hit | stop-loss ticks hit | max hold time elapsed
+
+Design notes:
+- All price comparisons use rounded values (4 d.p.) to avoid float equality misses.
+- PnL reported to risk manager is NET (after round-trip commission).
+- Stop-loss fires on the very first tick where price crosses the stop level.
 """
 from __future__ import annotations
 import logging
 import time as _time
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime
 
 from risk.manager import RiskManager
 
 log = logging.getLogger("scalper")
 
 
-# SGX minimum tick sizes by price band
 def tick_size(price: float) -> float:
+    """SGX minimum price movement for a given price level."""
     if price < 0.20:
         return 0.001
     if price < 2.00:
@@ -36,21 +40,21 @@ class Quote:
 
     @property
     def spread(self) -> float:
-        return self.ask - self.bid
+        return round(self.ask - self.bid, 4)
 
     @property
     def mid(self) -> float:
-        return (self.bid + self.ask) / 2
+        return round((self.bid + self.ask) / 2, 4)
 
 
 @dataclass
 class OpenTrade:
     symbol: str
-    side: str           # "BUY" or "SELL"
+    side: str            # "BUY" or "SELL"
     entry_price: float
     qty: int
-    target_price: float
-    stop_price: float
+    target_price: float  # rounded to 4 d.p.
+    stop_price: float    # rounded to 4 d.p.
     order_id: str
     entered_at: float = field(default_factory=_time.time)
 
@@ -61,7 +65,7 @@ class Scalper:
         self._risk = risk
         self._broker = broker
         self._history: dict[str, deque[Quote]] = {}
-        self._open: dict[str, OpenTrade] = {}   # symbol → trade
+        self._open: dict[str, OpenTrade] = {}
         window = cfg["momentum_period"] + 2
         for sym in cfg.get("watchlist", []):
             self._history[sym] = deque(maxlen=window)
@@ -70,7 +74,9 @@ class Scalper:
 
     def on_quote(self, q: Quote):
         """Called each polling cycle for a symbol."""
-        hist = self._history.setdefault(q.symbol, deque(maxlen=self._cfg["momentum_period"] + 2))
+        hist = self._history.setdefault(
+            q.symbol, deque(maxlen=self._cfg["momentum_period"] + 2)
+        )
         hist.append(q)
 
         if q.symbol in self._open:
@@ -82,15 +88,16 @@ class Scalper:
 
     def _try_enter(self, q: Quote, hist: deque[Quote]):
         tick = tick_size(q.last)
-        min_spread = tick * self._cfg["min_spread_ticks"]
+        min_spread = round(tick * self._cfg["min_spread_ticks"], 4)
 
         if q.spread < min_spread:
             return
         if q.volume < self._cfg.get("min_volume", 0):
             return
 
-        momentum = hist[-1].mid - hist[0].mid
-        if momentum == 0:
+        momentum = round(hist[-1].mid - hist[0].mid, 6)
+        # use tolerance instead of exact zero — float mid arithmetic can produce tiny residuals
+        if abs(momentum) < 1e-9:
             return
 
         target_ticks = self._cfg["target_profit_ticks"]
@@ -99,19 +106,22 @@ class Scalper:
         if momentum > 0:
             side         = "BUY"
             entry        = q.ask
-            target_price = entry + tick * target_ticks
-            stop_price   = entry - tick * stop_ticks
+            # round prices to 4 d.p. so comparison with incoming quotes is exact
+            target_price = round(entry + tick * target_ticks, 4)
+            stop_price   = round(entry - tick * stop_ticks,   4)
+            expected_gross = round((target_price - entry) * 1, 6)  # per share
         else:
             side         = "SELL"
             entry        = q.bid
-            target_price = entry - tick * target_ticks
-            stop_price   = entry + tick * stop_ticks
+            target_price = round(entry - tick * target_ticks, 4)
+            stop_price   = round(entry + tick * stop_ticks,   4)
+            expected_gross = round((entry - target_price) * 1, 6)  # per share, profit = price falls
 
-        # Position sizing: as many board lots as MaxPositionSGD allows
+        # Position sizing: as many board lots (100 shares) as MaxPositionSGD allows
         max_sgd = self._cfg["max_position_sgd"]
-        qty = int((max_sgd / entry) // 100) * 100   # floor to board lot
+        qty = int((max_sgd / entry) // 100) * 100
         if qty < 100:
-            log.debug("%s: price too high for board lot at S$%s limit", q.symbol, max_sgd)
+            log.debug("%s: price S$%.4f too high for board lot at S$%s limit", q.symbol, entry, max_sgd)
             return
 
         trade_val = entry * qty
@@ -120,14 +130,17 @@ class Scalper:
             log.debug("%s: risk blocked — %s", q.symbol, reason)
             return
 
-        net = self._risk.expected_net_pnl(entry, target_price, qty)
+        # expected_gross for the whole position
+        gross_total = expected_gross * qty
+        net = self._risk.expected_net_pnl(gross_total, trade_val)
         if net <= 0:
-            log.debug("%s: not profitable after commission (net=%.3f)", q.symbol, net)
+            log.debug(
+                "%s: not profitable after commission (gross=%.3f net=%.3f)",
+                q.symbol, gross_total, net,
+            )
             return
 
-        order_id = self._broker.place_order(
-            symbol=q.symbol, side=side, qty=qty, price=entry,
-        )
+        order_id = self._broker.place_order(symbol=q.symbol, side=side, qty=qty, price=entry)
         if order_id is None:
             log.warning("%s: order placement failed", q.symbol)
             return
@@ -138,7 +151,7 @@ class Scalper:
             target_price=target_price, stop_price=stop_price, order_id=order_id,
         )
         log.info(
-            "ENTER %s %s | entry=%.4f target=%.4f stop=%.4f qty=%d net_exp=%.2f SGD",
+            "ENTER %s %s | entry=%.4f target=%.4f stop=%.4f qty=%d net_exp=%.3f SGD",
             side, q.symbol, entry, target_price, stop_price, qty, net,
         )
 
@@ -152,14 +165,14 @@ class Scalper:
 
         if trade.side == "BUY":
             if q.bid >= trade.target_price:
-                exit_reason, exit_price = "target", q.bid
+                exit_reason, exit_price = "target",  q.bid
             elif q.bid <= trade.stop_price:
-                exit_reason, exit_price = "stop",   q.bid
-        else:  # SELL
+                exit_reason, exit_price = "stop",    q.bid
+        else:  # SELL (short)
             if q.ask <= trade.target_price:
-                exit_reason, exit_price = "target", q.ask
+                exit_reason, exit_price = "target",  q.ask
             elif q.ask >= trade.stop_price:
-                exit_reason, exit_price = "stop",   q.ask
+                exit_reason, exit_price = "stop",    q.ask
 
         if exit_reason is None and held >= max_hold:
             exit_reason = "timeout"
@@ -169,21 +182,27 @@ class Scalper:
             return
 
         exit_side = "SELL" if trade.side == "BUY" else "BUY"
-        self._broker.place_order(
-            symbol=trade.symbol, side=exit_side, qty=trade.qty, price=exit_price,
-        )
+        self._broker.place_order(symbol=trade.symbol, side=exit_side, qty=trade.qty, price=exit_price)
 
+        # gross PnL (direction-corrected)
         if trade.side == "BUY":
-            pnl = (exit_price - trade.entry_price) * trade.qty
+            gross = (exit_price - trade.entry_price) * trade.qty
         else:
-            pnl = (trade.entry_price - exit_price) * trade.qty
+            gross = (trade.entry_price - exit_price) * trade.qty
 
-        self._risk.record_close(trade.symbol, pnl)
+        # deduct round-trip commission so daily_pnl reflects actual cash impact
+        trade_val  = trade.entry_price * trade.qty
+        commission = self._risk.commission_for(trade_val)
+        net_pnl    = round(gross - 2 * commission, 4)
+
+        self._risk.record_close(trade.symbol, net_pnl)
         del self._open[trade.symbol]
 
         log.info(
-            "EXIT  %s | reason=%-8s entry=%.4f exit=%.4f pnl=%+.2f SGD held=%.1fs",
-            trade.symbol, exit_reason, trade.entry_price, exit_price, pnl, held,
+            "EXIT  %s | reason=%-8s entry=%.4f exit=%.4f gross=%+.3f comm=%.2f net=%+.3f SGD held=%.1fs",
+            trade.symbol, exit_reason,
+            trade.entry_price, exit_price,
+            gross, commission * 2, net_pnl, held,
         )
 
     @property
