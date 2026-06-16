@@ -45,8 +45,9 @@ def main():
     cfg = load_config(args.config)
 
     # broker selection
-    risk_cfg     = cfg["risk"]
-    capital      = risk_cfg.get("max_position_sgd", 1_000)
+    risk_cfg      = cfg["risk"]
+    total_capital = risk_cfg.get("total_capital_sgd", 1_000)   # broker account size
+    per_pos_sgd   = risk_cfg.get("max_position_sgd", 333)       # per-position limit
 
     if args.live:
         opend = cfg["opend"]
@@ -57,7 +58,7 @@ def main():
         )
         broker.connect()
         log.warning("=== LIVE TRADING MODE — REAL MONEY AT RISK ===")
-        log.warning("=== Capital limit: S$%d ===", capital)
+        log.warning("=== Capital: S$%d total / S$%d per position ===", total_capital, per_pos_sgd)
     elif cfg["opend"].get("trade_env", "SIMULATE").upper() == "SIMULATE" and not args.live:
         if cfg["opend"].get("use_opend_simulate", False):
             broker = MoomooBroker(
@@ -69,22 +70,22 @@ def main():
             log.info("connected to Moomoo SIMULATE environment")
         else:
             broker = PaperBroker(
-                initial_cash=float(capital),
+                initial_cash=float(total_capital),
                 commission_rate=risk_cfg["commission_rate"],
                 min_commission=risk_cfg["min_commission_sgd"],
             )
-            log.info("running in local paper trading mode (no OpenD needed) | capital=S$%d", capital)
+            log.info("paper trading | capital=S$%d  per_pos=S$%d", total_capital, per_pos_sgd)
     else:
         broker = PaperBroker(
-            initial_cash=float(capital),
+            initial_cash=float(total_capital),
             commission_rate=risk_cfg["commission_rate"],
             min_commission=risk_cfg["min_commission_sgd"],
         )
-        log.info("running in local paper trading mode | capital=S$%d", capital)
+        log.info("paper trading | capital=S$%d  per_pos=S$%d", total_capital, per_pos_sgd)
 
     strategy_cfg = cfg["strategy"]
-    # propagate risk settings used by screener and position sizing into strategy_cfg
-    strategy_cfg["max_position_sgd"] = capital
+    # propagate per-position limit so scalper sizes positions correctly
+    strategy_cfg["max_position_sgd"] = per_pos_sgd
 
     raw_watchlist: list[str] = cfg["watchlist"]
 
@@ -131,7 +132,7 @@ def main():
             screener_cfg = {
                 "max_price_sgd":    strategy_cfg.get("max_price_sgd", 3.00),
                 "min_volume":       strategy_cfg.get("min_volume", 1_000_000),
-                "max_position_sgd": capital,
+                "max_position_sgd": per_pos_sgd,
             }
             watchlist = screen(broker, raw_watchlist, screener_cfg) or raw_watchlist
             strategy_cfg["watchlist"] = watchlist

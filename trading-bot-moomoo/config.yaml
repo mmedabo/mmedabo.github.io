@@ -18,10 +18,11 @@ strategy:
   max_price_sgd: 3.00      # screener: skip stocks above this price
 
 risk:
-  max_position_sgd: 1000    # S$1,000 total capital per day
+  total_capital_sgd: 1000   # total daily capital funded into the broker account
+  max_position_sgd: 333     # max SGD per single position (total / max_open_positions)
   max_daily_loss_sgd: 80    # halt after losing 8% of capital (~4 bad stops)
-  max_open_positions: 1     # only one position at a time with S$1,000 capital
-  max_trades_per_day: 15    # ~15 cycles within a trading day
+  max_open_positions: 3     # spread capital across up to 3 simultaneous positions
+  max_trades_per_day: 30    # ~10 full cycles × 3 concurrent positions
   commission_rate: 0.0003   # 0.03% — Moomoo SG commission
   min_commission_sgd: 0.99  # Moomoo SG min per trade
 

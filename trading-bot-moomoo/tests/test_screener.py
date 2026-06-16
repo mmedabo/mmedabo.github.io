@@ -225,11 +225,11 @@ def test_screener_custom_min_volume():
 # ---------------------------------------------------------------------------
 
 def test_position_sizing_math_at_half_dollar():
-    """S$0.57 stock: floor(1000/0.57 / 100)*100 = 1700 shares = 17 lots."""
+    """S$0.57 stock at S$333/slot: floor(333/0.57/100)*100 = 500 shares = 5 lots."""
     entry = 0.57
-    capital = 1_000
+    capital = 333   # per-position limit (S$1,000 / 3 concurrent positions)
     qty = int((capital / entry) // 100) * 100
-    assert qty == 1700
+    assert qty == 500
     tick = 0.005  # S$0.20–S$1.99 range
     gross_4tick = qty * 4 * tick
     commission = max(entry * qty * 0.0003, 0.99)
@@ -238,11 +238,11 @@ def test_position_sizing_math_at_half_dollar():
 
 
 def test_position_sizing_math_at_twenty_cents():
-    """S$0.23 stock: floor(1000/0.23 / 100)*100 = 4300 shares = 43 lots."""
+    """S$0.23 stock at S$333/slot: floor(333/0.23/100)*100 = 1400 shares = 14 lots."""
     entry = 0.23
-    capital = 1_000
+    capital = 333   # per-position limit
     qty = int((capital / entry) // 100) * 100
-    assert qty == 4300
+    assert qty == 1400
     tick = 0.005
     gross_4tick = qty * 4 * tick
     commission = max(entry * qty * 0.0003, 0.99)
@@ -251,11 +251,11 @@ def test_position_sizing_math_at_twenty_cents():
 
 
 def test_position_sizing_math_at_two_eighty():
-    """S$2.80 stock: floor(1000/2.80 / 100)*100 = 300 shares = 3 lots."""
+    """S$2.80 stock at S$333/slot: floor(333/2.80/100)*100 = 100 shares = 1 lot."""
     entry = 2.80
-    capital = 1_000
+    capital = 333   # per-position limit
     qty = int((capital / entry) // 100) * 100
-    assert qty == 300
+    assert qty == 100
     tick = 0.01  # ≥ S$2.00
     gross_4tick = qty * 4 * tick
     commission = max(entry * qty * 0.0003, 0.99)
