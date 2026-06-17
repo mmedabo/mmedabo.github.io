@@ -1,8 +1,0 @@
-# Core (paper trading — no OpenD required)
-pyyaml==6.0.1
-pytz==2026.2
-flask==3.1.3
-
-# Only needed for --live mode (requires Moomoo OpenD running locally)
-# moomoo-api>=9.0.0
-# pandas>=2.0.0
