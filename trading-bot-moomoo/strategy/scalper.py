@@ -14,6 +14,7 @@ import logging
 import time as _time
 from collections import deque
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from market.session import is_warmup_period
 from risk.manager import RiskManager
@@ -69,6 +70,7 @@ class Scalper:
         self._open: dict[str, OpenTrade] = {}
         self._cooldown_until: dict[str, float] = {}    # symbol → epoch when cooldown expires
         self._market_momentums: dict[str, float] = {}  # symbol → latest momentum in ticks
+        self.trade_log: deque[dict] = deque(maxlen=50)  # recent closed trades for dashboard
         window = cfg["momentum_period"] + 2
         for sym in cfg.get("watchlist", []):
             self._history[sym] = deque(maxlen=window)
@@ -251,6 +253,18 @@ class Scalper:
         net_pnl    = round(gross - 2 * commission, 4)
 
         self._risk.record_close(trade.symbol, net_pnl)
+        self.trade_log.append({
+            "symbol":    trade.symbol,
+            "side":      trade.side,
+            "entry":     trade.entry_price,
+            "exit":      exit_price,
+            "qty":       trade.qty,
+            "reason":    exit_reason,
+            "gross":     round(gross, 3),
+            "net_pnl":   net_pnl,
+            "held_s":    round(held, 1),
+            "closed_at": datetime.now().strftime("%H:%M:%S"),
+        })
         del self._open[trade.symbol]
 
         cooldown = self._cfg.get("cooldown_seconds", 0)
@@ -268,3 +282,19 @@ class Scalper:
     @property
     def open_symbols(self) -> list[str]:
         return list(self._open.keys())
+
+    def open_positions_snapshot(self) -> list[dict]:
+        """Return a copy of all open trades for the monitoring dashboard."""
+        now = _time.time()
+        return [
+            {
+                "symbol": t.symbol,
+                "side":   t.side,
+                "entry":  t.entry_price,
+                "qty":    t.qty,
+                "target": t.target_price,
+                "stop":   t.stop_price,
+                "held_s": round(now - t.entered_at, 1),
+            }
+            for t in self._open.values()
+        ]

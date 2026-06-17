@@ -8,6 +8,7 @@ Usage:
   python main.py --config my.yaml    # use custom config file
 """
 import argparse
+import datetime
 import logging
 import signal
 import time
@@ -20,6 +21,7 @@ from market.screener import screen
 from market.session import is_market_open, seconds_until_open
 from risk.manager import RiskManager
 from strategy.scalper import Quote, Scalper
+from web.server import start as start_web, update_state
 
 logging.basicConfig(
     level=logging.INFO,
@@ -92,6 +94,7 @@ def main():
     per_pos_sgd   = risk_cfg.get("max_position_sgd", 333)      # per-position limit
     min_capital   = risk_cfg.get("min_capital_sgd", 0)         # capital floor (0 = disabled)
 
+    mode = "paper"
     if args.live:
         from broker.moomoo_broker import MoomooBroker  # requires moomoo-api + OpenD
         opend = cfg["opend"]
@@ -100,6 +103,7 @@ def main():
             broker.connect()
         except Exception as e:
             raise SystemExit(f"Failed to connect to Moomoo OpenD (REAL): {e}")
+        mode = "live"
         log.warning("=== LIVE TRADING MODE — REAL MONEY AT RISK ===")
         log.warning("=== Capital: S$%d total / S$%d per position ===", total_capital, per_pos_sgd)
     elif cfg["opend"].get("use_opend_simulate", False):
@@ -111,6 +115,7 @@ def main():
             broker.connect()
         except Exception as e:
             raise SystemExit(f"Failed to connect to Moomoo OpenD (SIMULATE): {e}")
+        mode = "sim"
         log.info("connected to Moomoo SIMULATE environment")
     else:
         broker = PaperBroker(
@@ -120,6 +125,11 @@ def main():
         )
         log.info("paper trading | capital=S$%d  per_pos=S$%d  floor=S$%d",
                  total_capital, per_pos_sgd, min_capital)
+
+    # ── web dashboard (daemon thread — never affects trading loop) ────────
+    web_cfg = cfg.get("web", {})
+    if web_cfg.get("enabled", True):
+        start_web(host=web_cfg.get("host", "127.0.0.1"), port=web_cfg.get("port", 5000))
 
     # ── strategy / risk ───────────────────────────────────────────────────
     strategy_cfg = cfg["strategy"]
@@ -209,6 +219,25 @@ def main():
                 last=raw["last"],
                 volume=raw["volume"],
             ))
+
+        # ── publish state to monitoring dashboard (read-only, never blocks) ─
+        _s = risk.summary()
+        update_state({
+            "running":          True,
+            "mode":             mode,
+            "updated_at":       datetime.datetime.now().strftime("%H:%M:%S"),
+            "balance":          round(broker.get_balance(), 2),
+            "daily_pnl":        _s["daily_pnl"],
+            "trades":           _s["trades"],
+            "open":             _s["open"],
+            "consec_losses":    _s["consec_losses"],
+            "size_factor":      _s["size_factor"],
+            "blacklisted":      _s["blacklisted"],
+            "max_trades_per_day": risk_cfg.get("max_trades_per_day", 30),
+            "watchlist":        list(watchlist),
+            "open_positions":   scalper.open_positions_snapshot(),
+            "recent_trades":    list(scalper.trade_log),
+        })
 
         # ── periodic stats ────────────────────────────────────────────────
         now = time.time()

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SGX Bot Monitor</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d1117;
+      color: #c9d1d9;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      min-height: 100vh;
+    }
+
+    /* ── header ──────────────────────────────────────────── */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    h1 { font-size: 15px; color: #58a6ff; letter-spacing: 0.04em; }
+    .badge {
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      padding: 2px 8px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    .badge-paper  { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+    .badge-live   { background: #3d1515; color: #f85149; border: 1px solid #6e1d1d; animation: pulse 2s infinite; }
+    .badge-sim    { background: #1c2c1c; color: #3fb950; border: 1px solid #2ea043; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
+    .header-right { display: flex; align-items: center; gap: 16px; color: #484f58; font-size: 11px; }
+    #conn-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #30363d; margin-right: 4px; }
+    #conn-dot.ok { background: #3fb950; }
+    #conn-dot.err { background: #f85149; }
+
+    /* ── metrics row ─────────────────────────────────────── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: #30363d;
+      border-bottom: 1px solid #30363d;
+    }
+    .metric {
+      background: #161b22;
+      padding: 18px 24px;
+    }
+    .metric-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #484f58;
+      margin-bottom: 8px;
+    }
+    .metric-value {
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .metric-sub { font-size: 11px; color: #484f58; margin-top: 4px; }
+
+    /* ── colour helpers ──────────────────────────────────── */
+    .pos  { color: #3fb950; }
+    .neg  { color: #f85149; }
+    .neu  { color: #c9d1d9; }
+    .dim  { color: #484f58; }
+    .warn { color: #d29922; }
+
+    /* ── alert bar ───────────────────────────────────────── */
+    #alert-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 24px;
+      background: #161b22;
+      border-bottom: 1px solid #21262d;
+      min-height: 38px;
+      align-items: center;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 3px;
+      letter-spacing: 0.02em;
+    }
+    .chip-ok     { background: #0d2114; color: #3fb950; border: 1px solid #1a4129; }
+    .chip-warn   { background: #2b1d0e; color: #d29922; border: 1px solid #5a3e1b; }
+    .chip-danger { background: #2d0f0f; color: #f85149; border: 1px solid #6e1d1d; }
+
+    /* ── tables ──────────────────────────────────────────── */
+    .section { padding: 20px 24px; }
+    .section + .section { padding-top: 0; }
+    .section-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #484f58;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .count-badge {
+      background: #21262d;
+      color: #8b949e;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #484f58;
+      padding: 6px 10px;
+      border-bottom: 1px solid #21262d;
+    }
+    tbody td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #161b22;
+      vertical-align: middle;
+    }
+    tbody tr:hover td { background: #161b22; }
+    tbody tr:last-child td { border-bottom: none; }
+    .empty-row td {
+      text-align: center;
+      color: #30363d;
+      padding: 20px;
+      font-size: 12px;
+    }
+
+    /* ── trade reason badges ─────────────────────────────── */
+    .reason {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      letter-spacing: 0.04em;
+    }
+    .reason-target  { background: #0d2114; color: #3fb950; }
+    .reason-stop    { background: #2d0f0f; color: #f85149; }
+    .reason-timeout { background: #2b1d0e; color: #d29922; }
+
+    .side-buy  { color: #58a6ff; }
+    .side-sell { color: #d29922; }
+
+    /* ── divider ─────────────────────────────────────────── */
+    .divider { height: 1px; background: #21262d; margin: 0 24px; }
+
+    /* ── responsive ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .metric-value { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>SGX Scalping Bot</h1>
+    <span id="mode-badge" class="badge badge-paper">PAPER</span>
+  </div>
+  <div class="header-right">
+    <span><span id="conn-dot"></span><span id="conn-label">connecting…</span></span>
+    <span>updated <span id="ts">—</span></span>
+  </div>
+</header>
+
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Balance (SGD)</div>
+    <div class="metric-value neu" id="balance">—</div>
+    <div class="metric-sub" id="balance-sub">&nbsp;</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Daily P&amp;L (SGD)</div>
+    <div class="metric-value neu" id="daily-pnl">—</div>
+    <div class="metric-sub" id="pnl-sub">&nbsp;</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Trades Today</div>
+    <div class="metric-value neu" id="trades">—</div>
+    <div class="metric-sub" id="trades-sub">&nbsp;</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Open Positions</div>
+    <div class="metric-value neu" id="open-count">—</div>
+    <div class="metric-sub" id="open-sub">&nbsp;</div>
+  </div>
+</div>
+
+<div id="alert-bar"><span class="chip chip-ok">⬤ connecting…</span></div>
+
+<div class="section">
+  <div class="section-title">
+    Open Positions
+    <span class="count-badge" id="open-badge">0</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Symbol</th>
+        <th>Side</th>
+        <th>Entry</th>
+        <th>Qty</th>
+        <th>Target</th>
+        <th>Stop</th>
+        <th>Held</th>
+      </tr>
+    </thead>
+    <tbody id="open-tbody">
+      <tr class="empty-row"><td colspan="7">No open positions</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+  <div class="section-title">
+    Recent Trades
+    <span class="count-badge" id="trades-badge">0</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Symbol</th>
+        <th>Side</th>
+        <th>Entry</th>
+        <th>Exit</th>
+        <th>Qty</th>
+        <th>Reason</th>
+        <th>Net P&amp;L</th>
+        <th>Held</th>
+      </tr>
+    </thead>
+    <tbody id="trades-tbody">
+      <tr class="empty-row"><td colspan="9">No trades yet</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  "use strict";
+
+  /* ── helpers ─────────────────────────────────────────── */
+  const $ = id => document.getElementById(id);
+
+  function fmt(v, dec = 2) {
+    return v == null ? "—" : Number(v).toFixed(dec);
+  }
+  function fmtHeld(s) {
+    if (s == null) return "—";
+    return s < 60 ? `${Math.round(s)}s` : `${(s / 60).toFixed(1)}m`;
+  }
+  function pnlClass(v) {
+    return v > 0 ? "pos" : v < 0 ? "neg" : "neu";
+  }
+  function pnlSign(v) {
+    return v > 0 ? "+" : "";
+  }
+  function esc(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  /* ── refresh ─────────────────────────────────────────── */
+  async function refresh() {
+    let data;
+    try {
+      const r = await fetch("/api/status", { cache: "no-store" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      data = await r.json();
+      $("conn-dot").className = "ok";
+      $("conn-label").textContent = "live";
+    } catch (e) {
+      $("conn-dot").className = "err";
+      $("conn-label").textContent = "disconnected";
+      return; // leave existing data on screen
+    }
+
+    /* header */
+    $("ts").textContent = data.updated_at || "—";
+    const mode = data.mode || "paper";
+    const badge = $("mode-badge");
+    badge.textContent = mode.toUpperCase();
+    badge.className = "badge badge-" + mode;
+
+    /* metrics */
+    $("balance").textContent = fmt(data.balance);
+
+    const pnl = data.daily_pnl ?? 0;
+    $("daily-pnl").textContent = pnlSign(pnl) + fmt(pnl);
+    $("daily-pnl").className = "metric-value " + pnlClass(pnl);
+
+    $("trades").textContent = data.trades ?? "—";
+    $("trades-sub").textContent =
+      data.trades != null ? `of ${data.max_trades_per_day ?? "∞"} limit` : "";
+
+    $("open-count").textContent = data.open ?? "—";
+    $("open-sub").textContent =
+      data.size_factor < 1
+        ? `⬇ ${(data.size_factor * 100).toFixed(0)}% size (stepdown)`
+        : "";
+    $("open-sub").className =
+      "metric-sub " + (data.size_factor < 1 ? "warn" : "dim");
+
+    /* alert bar */
+    const chips = [];
+    if (data.size_factor < 1) {
+      chips.push(
+        `<span class="chip chip-warn">⬇ Position size ${(data.size_factor * 100).toFixed(0)}% — ${data.consec_losses} consecutive loss${data.consec_losses !== 1 ? "es" : ""}</span>`
+      );
+    }
+    (data.blacklisted || []).forEach(sym =>
+      chips.push(`<span class="chip chip-danger">✕ ${esc(sym)} blacklisted today</span>`)
+    );
+    if (!chips.length) {
+      chips.push(`<span class="chip chip-ok">✓ All systems normal</span>`);
+    }
+    if (data.watchlist && data.watchlist.length) {
+      chips.push(
+        `<span class="chip chip-ok" style="margin-left:auto">Watching: ${data.watchlist.map(esc).join(" · ")}</span>`
+      );
+    }
+    $("alert-bar").innerHTML = chips.join("");
+
+    /* open positions */
+    const positions = data.open_positions || [];
+    $("open-badge").textContent = positions.length;
+    $("open-tbody").innerHTML = positions.length
+      ? positions.map(p => `
+          <tr>
+            <td><strong>${esc(p.symbol)}</strong></td>
+            <td class="side-${p.side.toLowerCase()}">${esc(p.side)}</td>
+            <td>${fmt(p.entry, 4)}</td>
+            <td>${p.qty}</td>
+            <td class="pos">${fmt(p.target, 4)}</td>
+            <td class="neg">${fmt(p.stop, 4)}</td>
+            <td class="dim">${fmtHeld(p.held_s)}</td>
+          </tr>`).join("")
+      : `<tr class="empty-row"><td colspan="7">No open positions</td></tr>`;
+
+    /* recent trades — newest first */
+    const trades = [...(data.recent_trades || [])].reverse();
+    $("trades-badge").textContent = trades.length;
+    $("trades-tbody").innerHTML = trades.length
+      ? trades.map(t => `
+          <tr>
+            <td class="dim">${esc(t.closed_at)}</td>
+            <td><strong>${esc(t.symbol)}</strong></td>
+            <td class="side-${t.side.toLowerCase()}">${esc(t.side)}</td>
+            <td>${fmt(t.entry, 4)}</td>
+            <td>${fmt(t.exit, 4)}</td>
+            <td>${t.qty}</td>
+            <td><span class="reason reason-${t.reason}">${esc(t.reason)}</span></td>
+            <td class="${pnlClass(t.net_pnl)}">${pnlSign(t.net_pnl)}${fmt(t.net_pnl)}</td>
+            <td class="dim">${fmtHeld(t.held_s)}</td>
+          </tr>`).join("")
+      : `<tr class="empty-row"><td colspan="9">No trades yet today</td></tr>`;
+  }
+
+  refresh();
+  setInterval(refresh, 2000);
+</script>
+</body>
+</html>

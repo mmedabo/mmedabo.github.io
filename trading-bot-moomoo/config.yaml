@@ -40,6 +40,11 @@ risk:
   stepdown_after_losses: 2  # step down position size after N consecutive losses (any symbol)
   stepdown_factor: 0.5      # position size multiplier during step-down (0.5 = half size)
 
+web:
+  enabled: true
+  host: "127.0.0.1"   # local-only — do not expose to a network
+  port: 5000
+
 # Curated low-value SGX watchlist — all priced under S$3, liquid (≥1M vol/day).
 # The screener ranks these each morning by liquidity/spread and picks the best.
 # Tick size: ≤S$0.20 → 0.001  |  S$0.20–S$1.99 → 0.005  |  ≥S$2.00 → 0.010
