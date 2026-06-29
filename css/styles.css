@@ -209,10 +209,10 @@ code{background:#1E3A20;padding:2px 6px;border-radius:4px;font-size:.82em;}
 
 /* ── LOGO STAMP overlay on a photo ── */
 .stamped-photo{position:relative;display:block;line-height:0;}
-.photo-stamp{position:absolute;right:12px;bottom:12px;width:56px;height:56px;border-radius:50%;
+.photo-stamp{position:absolute;left:12px;bottom:12px;width:112px;height:112px;border-radius:50%;
   object-fit:cover;border:2px solid rgba(255,255,255,.9);box-shadow:0 2px 10px rgba(0,0,0,.55);
   background:#000;}
-@media(max-width:480px){.photo-stamp{width:44px;height:44px;right:8px;bottom:8px;}}
+@media(max-width:480px){.photo-stamp{width:88px;height:88px;left:8px;bottom:8px;}}
 
 /* ── GROUP PHOTO (bottom of knockout) ── */
 .group-photo-wrap{max-width:760px;margin:36px auto 0;text-align:center;}
