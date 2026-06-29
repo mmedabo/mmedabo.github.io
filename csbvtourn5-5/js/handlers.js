@@ -341,7 +341,7 @@ window.saveDaySchedule = () => {
 };
 
 /* ==========================================================================
-   HASH ROUTING - deep-link straight to a tab (e.g. mmedabo.github.io/#rules)
+   HASH ROUTING - deep-link straight to a tab (e.g. mmedabo.github.io/csbvtourn5-5/#rules)
 ========================================================================== */
 const VALID_TABS = ["overview","pools","knockout","teams","schedule","history","rules"];
 

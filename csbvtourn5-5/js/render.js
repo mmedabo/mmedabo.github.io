@@ -1064,7 +1064,7 @@ function rulesContent() {
     <div class="rules-intro">
       <strong style="color:#C8F04A">CSBV 5.5 &bull; Rules in Motion.</strong>
       Each card below is an animated explainer of a core tournament rule.
-      Share this page directly: <code>mmedabo.github.io/#rules</code>
+      Share this page directly: <code>mmedabo.github.io/csbvtourn5-5/#rules</code>
     </div>
     <div class="rules-grid">
 
