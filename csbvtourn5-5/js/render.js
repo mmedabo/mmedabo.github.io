@@ -1394,47 +1394,182 @@ function rulesContent() {
     </svg>
     </div>
 
-    <!-- 10. FINGER SET RULES -->
+    <!-- 10. CLEAN SET (no spin) -->
     <div class="rules-card">
-    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No finger set on first and third touch, no set-over on second">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Set the ball clean with no spin; a spinning ball is a double-contact fault">
       <style>
-        .r10-x1{opacity:0;animation:r10x 3.6s 0s infinite;transform-origin:106px 140px;transform-box:view-box}
-        .r10-x3{opacity:0;animation:r10x 3.6s 1.2s infinite;transform-origin:294px 140px;transform-box:view-box}
-        @keyframes r10x{0%,8%{opacity:0;transform:scale(.3)}16%{opacity:1;transform:scale(1.25)}22%{transform:scale(1)}88%{opacity:1}100%{opacity:0}}
-        .r10-c2{opacity:0;animation:r10c 3.6s .6s infinite;transform-origin:200px 140px;transform-box:view-box}
-        @keyframes r10c{0%,8%{opacity:0;transform:scale(.3)}16%{opacity:1;transform:scale(1.2)}22%{transform:scale(1)}88%{opacity:1}100%{opacity:0}}
+        .r10-ok{animation:r10a 5s infinite}@keyframes r10a{0%,44%{opacity:1}50%,100%{opacity:0}}
+        .r10-no{animation:r10b 5s infinite}@keyframes r10b{0%,44%{opacity:0}50%,96%{opacity:1}100%{opacity:0}}
+        .r10-spin{animation:r10s 1.1s linear infinite;transform-box:fill-box;transform-origin:center}
+        @keyframes r10s{to{transform:rotate(360deg)}}
       </style>
       <rect width="400" height="330" rx="14" fill="#0F4347"/>
-      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#E04444" letter-spacing="2">FINGER SET RULES</text>
-      <g font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="17" fill="#EFD9A0" text-anchor="middle">
-        <text x="106" y="212">1ST</text><text x="200" y="212">2ND</text><text x="294" y="212">3RD</text>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">CLEAN SET</text>
+      <path d="M168,214 Q186,190 200,208 Q214,190 232,214" fill="none" stroke="#E96B3C" stroke-width="6" stroke-linecap="round"/>
+      <path d="M176,206 L168,192 M224,206 L232,192" stroke="#E96B3C" stroke-width="5" stroke-linecap="round"/>
+      <g transform="translate(200,156)">
+        <circle r="16" fill="#F4E9C8"/>
+        <path d="M-16,0 Q0,-9 16,0 M-16,0 Q0,9 16,0 M0,-16 Q7,0 0,16" fill="none" stroke="#0F4347" stroke-width="1.6"/>
+        <circle class="r10-spin r10-no" r="25" fill="none" stroke="#E04444" stroke-width="3" stroke-dasharray="7 9"/>
       </g>
-      <g fill="#F4E9C8">
-        <g transform="translate(106,140)">
-          <circle r="14" fill="#F4E9C8"/><path d="M-14,0 Q0,-8 14,0 M-14,0 Q0,8 14,0" fill="none" stroke="#0F4347" stroke-width="1.6"/>
-          <path d="M-18,24 L-8,12 M-12,26 L-4,14 M18,24 L8,12 M12,26 L4,14" stroke="#E96B3C" stroke-width="5" stroke-linecap="round"/>
+      <g class="r10-ok">
+        <path d="M252,108 L264,120 L290,90" fill="none" stroke="#7BC47F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <g class="r10-no">
+        <g stroke="#E04444" stroke-width="6" stroke-linecap="round"><line x1="252" y1="94" x2="282" y2="124"/><line x1="282" y1="94" x2="252" y2="124"/></g>
+        <text x="267" y="150" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-weight="600" font-size="11" fill="#E04444">SPIN = DOUBLE</text>
+      </g>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">SET IT CLEAN &mdash; NO SPIN</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">A spinning ball is a double-contact fault</text>
+    </svg>
+    </div>
+
+    <!-- 11. SET OVER THE NET (square only) -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Setting over the net is legal only if square, perpendicular to the line of your shoulders, front or back">
+      <style>
+        .r11-ok{animation:r11a 5s infinite}@keyframes r11a{0%,44%{opacity:1}50%,100%{opacity:0}}
+        .r11-no{animation:r11b 5s infinite}@keyframes r11b{0%,44%{opacity:0}50%,96%{opacity:1}100%{opacity:0}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">SET OVER</text>
+      <line x1="56" y1="92" x2="344" y2="92" stroke="#F4E9C8" stroke-width="4"/>
+      <line x1="200" y1="92" x2="200" y2="232" stroke="#156066" stroke-width="2"/>
+      <line x1="150" y1="214" x2="250" y2="214" stroke="#E96B3C" stroke-width="9" stroke-linecap="round"/>
+      <circle cx="200" cy="196" r="11" fill="#E96B3C"/>
+      <g class="r11-ok">
+        <path d="M200,190 L200,72" fill="none" stroke="#7BC47F" stroke-width="3" stroke-dasharray="6 6"/>
+        <polygon points="200,60 192,76 208,76" fill="#7BC47F"/>
+        <path d="M262,150 L272,160 L294,134" fill="none" stroke="#7BC47F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="278" y="186" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-weight="600" font-size="11" fill="#7BC47F">SQUARE</text>
+      </g>
+      <g class="r11-no">
+        <path d="M200,190 L300,86" fill="none" stroke="#E04444" stroke-width="3" stroke-dasharray="6 6"/>
+        <polygon points="306,76 290,82 300,96" fill="#E04444"/>
+        <g stroke="#E04444" stroke-width="6" stroke-linecap="round"><line x1="104" y1="120" x2="134" y2="150"/><line x1="134" y1="120" x2="104" y2="150"/></g>
+        <text x="119" y="176" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-weight="600" font-size="11" fill="#E04444">ANGLED</text>
+      </g>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="15" fill="#F4E9C8" letter-spacing="1">SET OVER? SQUARE &amp; CLEAN ONLY</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Face the ball &mdash; send it straight, front or back</text>
+    </svg>
+    </div>
+
+    <!-- 12. SERVE ORDER (alternate) -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Partners must alternate serving; the player who did not serve last serves next">
+      <style>
+        .r12-a{animation:r12a 4s infinite}@keyframes r12a{0%,40%{opacity:1}50%,100%{opacity:0}}
+        .r12-b{animation:r12b 4s infinite}@keyframes r12b{0%,40%{opacity:0}50%,90%{opacity:1}100%{opacity:0}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">SERVE ORDER</text>
+      <rect x="40" y="232" width="320" height="9" rx="4" fill="#E3CFA0"/>
+      <g transform="translate(140,150)">
+        <circle class="r12-a" cx="0" cy="0" r="34" fill="none" stroke="#C8F04A" stroke-width="3"/>
+        <circle cx="0" cy="-18" r="13" fill="#E96B3C"/><path d="M-14,52 Q0,6 14,52 Z" fill="#E96B3C"/>
+        <text x="0" y="-14" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="14" fill="#0F4347">A</text>
+        <g class="r12-a"><circle cx="26" cy="-2" r="9" fill="#F4E9C8"/><path d="M17,-2 Q26,-8 35,-2 M17,-2 Q26,4 35,-2" fill="none" stroke="#0F4347" stroke-width="1.3"/></g>
+      </g>
+      <g transform="translate(260,150)">
+        <circle class="r12-b" cx="0" cy="0" r="34" fill="none" stroke="#C8F04A" stroke-width="3"/>
+        <circle cx="0" cy="-18" r="13" fill="#D88A52"/><path d="M-14,52 Q0,6 14,52 Z" fill="#D88A52"/>
+        <text x="0" y="-14" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="14" fill="#0F4347">B</text>
+        <g class="r12-b"><circle cx="-26" cy="-2" r="9" fill="#F4E9C8"/><path d="M-35,-2 Q-26,-8 -17,-2 M-35,-2 Q-26,4 -17,-2" fill="none" stroke="#0F4347" stroke-width="1.3"/></g>
+      </g>
+      <path d="M178,108 Q200,90 222,108" fill="none" stroke="#9CC3BD" stroke-width="2" stroke-dasharray="4 5"/>
+      <polygon points="222,108 213,103 216,113" fill="#9CC3BD"/>
+      <polygon points="178,108 187,103 184,113" fill="#9CC3BD"/>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="15" fill="#F4E9C8" letter-spacing="1">PARTNERS TAKE TURNS SERVING</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Win the serve back? The other partner serves</text>
+    </svg>
+    </div>
+
+    <!-- 13. NET TOUCH (fault) -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Touching the net during play is a fault">
+      <style>
+        .r13-net{animation:r13n 2.4s ease-in-out infinite}@keyframes r13n{0%,55%{stroke:#F4E9C8}70%,85%{stroke:#E04444}100%{stroke:#F4E9C8}}
+        .r13-hand{animation:r13h 2.4s ease-in-out infinite}@keyframes r13h{0%{transform:translateX(-26px)}55%,100%{transform:translateX(0)}}
+        .r13-x{opacity:0;animation:r13x 2.4s infinite;transform-origin:262px 120px;transform-box:view-box}
+        @keyframes r13x{0%,58%{opacity:0;transform:scale(.4)}70%{opacity:1;transform:scale(1.2)}80%{transform:scale(1)}94%{opacity:1}100%{opacity:0}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#E04444" letter-spacing="2">NET TOUCH</text>
+      <line x1="190" y1="74" x2="190" y2="244" stroke="#F4E9C8" stroke-width="4"/>
+      <rect class="r13-net" x="150" y="86" width="40" height="120" fill="none" stroke="#F4E9C8" stroke-width="2"/>
+      <g stroke="#F4E9C8" stroke-width="1" opacity=".55">
+        <line x1="163" y1="86" x2="163" y2="206"/><line x1="176" y1="86" x2="176" y2="206"/>
+        <line x1="150" y1="116" x2="190" y2="116"/><line x1="150" y1="146" x2="190" y2="146"/><line x1="150" y1="176" x2="190" y2="176"/>
+      </g>
+      <g class="r13-hand">
+        <path d="M250,150 L196,140" stroke="#E96B3C" stroke-width="10" stroke-linecap="round"/>
+        <circle cx="250" cy="150" r="12" fill="#E96B3C"/>
+      </g>
+      <g class="r13-x" stroke="#E04444" stroke-width="7" stroke-linecap="round">
+        <line x1="244" y1="102" x2="280" y2="138"/><line x1="280" y1="102" x2="244" y2="138"/>
+      </g>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">DON'T TOUCH THE NET</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Contact while playing the ball loses the point</text>
+    </svg>
+    </div>
+
+    <!-- 14. UNDER THE NET (no crossing) -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Do not cross under the net or interfere with the opponent's space">
+      <style>
+        .r14-foot{animation:r14f 3s ease-in-out infinite}@keyframes r14f{0%,100%{transform:translateX(0)}45%,70%{transform:translateX(46px)}}
+        .r14-x{opacity:0;animation:r14x 3s infinite;transform-origin:246px 150px;transform-box:view-box}
+        @keyframes r14x{0%,46%{opacity:0;transform:scale(.4)}58%{opacity:1;transform:scale(1.2)}66%{transform:scale(1)}92%{opacity:1}100%{opacity:0}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#E04444" letter-spacing="2">UNDER THE NET</text>
+      <line x1="200" y1="70" x2="200" y2="244" stroke="#F4E9C8" stroke-width="2" stroke-dasharray="7 7"/>
+      <rect x="170" y="80" width="60" height="34" fill="none" stroke="#F4E9C8" stroke-width="2"/>
+      <line x1="170" y1="114" x2="230" y2="114" stroke="#F4E9C8" stroke-width="4"/>
+      <rect x="40" y="232" width="320" height="9" rx="4" fill="#E3CFA0"/>
+      <text x="115" y="100" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-weight="600" font-size="11" fill="#9CC3BD">YOUR SIDE</text>
+      <text x="288" y="100" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-weight="600" font-size="11" fill="#9CC3BD">THEIRS</text>
+      <g class="r14-foot">
+        <circle cx="150" cy="150" r="12" fill="#E96B3C"/>
+        <path d="M150,162 L150,210" stroke="#E96B3C" stroke-width="10" stroke-linecap="round"/>
+        <path d="M150,210 L176,222" stroke="#E96B3C" stroke-width="10" stroke-linecap="round"/>
+      </g>
+      <g class="r14-x" stroke="#E04444" stroke-width="7" stroke-linecap="round">
+        <line x1="228" y1="132" x2="264" y2="168"/><line x1="264" y1="132" x2="228" y2="168"/>
+      </g>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">STAY ON YOUR SIDE</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Don't cross under &amp; interfere with opponents</text>
+    </svg>
+    </div>
+
+    <!-- 15. CLEAN CONTACT (no lift) -->
+    <div class="rules-card">
+    <svg viewBox="0 0 400 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hit the ball cleanly; no catching, holding, lifting or throwing">
+      <style>
+        .r15-ok{animation:r15a 5s infinite}@keyframes r15a{0%,44%{opacity:1}50%,100%{opacity:0}}
+        .r15-no{animation:r15b 5s infinite}@keyframes r15b{0%,44%{opacity:0}50%,96%{opacity:1}100%{opacity:0}}
+        .r15-bounce{animation:r15c 1.6s ease-in-out infinite}@keyframes r15c{0%,100%{transform:translateY(-30px)}50%{transform:translateY(0)}}
+      </style>
+      <rect width="400" height="330" rx="14" fill="#0F4347"/>
+      <text x="200" y="42" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-weight="700" font-size="24" fill="#EFD9A0" letter-spacing="2">CLEAN CONTACT</text>
+      <g class="r15-ok">
+        <path d="M150,212 Q175,182 200,206" fill="none" stroke="#E96B3C" stroke-width="6" stroke-linecap="round"/>
+        <g class="r15-bounce"><g transform="translate(186,162)">
+          <circle r="15" fill="#F4E9C8"/><path d="M-15,0 Q0,-9 15,0 M-15,0 Q0,9 15,0 M0,-15 Q7,0 0,15" fill="none" stroke="#0F4347" stroke-width="1.5"/>
+        </g></g>
+        <path d="M250,150 L260,160 L284,134" fill="none" stroke="#7BC47F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="270" y="186" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-weight="600" font-size="11" fill="#7BC47F">REBOUND</text>
+      </g>
+      <g class="r15-no">
+        <g transform="translate(190,170)">
+          <circle r="15" fill="#F4E9C8"/><path d="M-15,0 Q0,-9 15,0 M-15,0 Q0,9 15,0" fill="none" stroke="#0F4347" stroke-width="1.5"/>
+          <path d="M-20,16 Q-22,-2 -6,-8 M20,16 Q22,-2 6,-8 M-14,18 L14,18" fill="none" stroke="#E96B3C" stroke-width="6" stroke-linecap="round"/>
         </g>
-        <g transform="translate(200,140)">
-          <circle r="14" fill="#F4E9C8"/><path d="M-14,0 Q0,-8 14,0 M-14,0 Q0,8 14,0" fill="none" stroke="#0F4347" stroke-width="1.6"/>
-          <path d="M-18,24 L-8,12 M-12,26 L-4,14 M18,24 L8,12 M12,26 L4,14" stroke="#E96B3C" stroke-width="5" stroke-linecap="round"/>
-        </g>
-        <g transform="translate(294,140)">
-          <circle r="14" fill="#F4E9C8"/><path d="M-14,0 Q0,-8 14,0 M-14,0 Q0,8 14,0" fill="none" stroke="#0F4347" stroke-width="1.6"/>
-          <path d="M-18,24 L-8,12 M-12,26 L-4,14 M18,24 L8,12 M12,26 L4,14" stroke="#E96B3C" stroke-width="5" stroke-linecap="round"/>
-        </g>
+        <g stroke="#E04444" stroke-width="6" stroke-linecap="round"><line x1="250" y1="100" x2="280" y2="130"/><line x1="280" y1="100" x2="250" y2="130"/></g>
+        <text x="265" y="154" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-weight="600" font-size="11" fill="#E04444">LIFT / CARRY</text>
       </g>
-      <g class="r10-x1" stroke="#E04444" stroke-width="7" stroke-linecap="round">
-        <line x1="84" y1="118" x2="128" y2="162"/><line x1="128" y1="118" x2="84" y2="162"/>
-      </g>
-      <g class="r10-x3" stroke="#E04444" stroke-width="7" stroke-linecap="round">
-        <line x1="272" y1="118" x2="316" y2="162"/><line x1="316" y1="118" x2="272" y2="162"/>
-      </g>
-      <g class="r10-c2">
-        <path d="M186,142 L196,152 L216,128" fill="none" stroke="#7BC47F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-        <text x="200" y="184" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-weight="600" font-size="11" fill="#E04444">NO SET-OVER</text>
-      </g>
-      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">NO SET ON 1ST &amp; 3RD TOUCH</text>
-      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">Set OK on 2nd &mdash; but don't set it over the net</text>
+      <text x="200" y="282" text-anchor="middle" font-family="Oswald,Arial Narrow,sans-serif" font-size="16" fill="#F4E9C8" letter-spacing="1">HIT IT CLEAN</text>
+      <text x="200" y="306" text-anchor="middle" font-family="Hanken Grotesk,sans-serif" font-size="12" fill="#9CC3BD">No catching, holding, lifting or throwing</text>
     </svg>
     </div>
 
